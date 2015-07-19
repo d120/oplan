@@ -1,0 +1,97 @@
+<html><head>
+<meta charset="utf-8">
+<title>Slot</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="bower_components/ag-grid/dist/angular-grid.css">
+<link rel="stylesheet" href="bower_components/ag-grid/dist/theme-fresh.css">
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/angular/angular.js"></script>
+<script src="bower_components/ag-grid/dist/angular-grid.js"></script>
+
+<script>
+var module = angular.module("oplanSlot", ["angularGrid"]);
+module.config(function($locationProvider) {
+    //$locationProvider.html5Mode(true);
+});
+module.controller("OplanSlotController", function($scope, $http, $location, $filter) {
+    console.log($location.search());
+    var id = $location.search().id;
+    if (!id) { $scope.error = "Bitte Parameter id angeben"; return; }
+
+    var columnDefs = [
+        {headerName: "Kommentar", field: "kommentar", editable: true},
+        {headerName: "Min. Plätze", field: "min_platz", editable: true},
+        {headerName: "Raumnr. Präferenz", field: "praeferenz", editable: true},
+        {headerName: "Raumnr. zugeteilt", field: "raum", cellRenderer: raumAuswahl}
+    ];
+
+    var frei = [];
+    var rowData = [];
+
+    $scope.gridOptions = {
+        columnDefs: columnDefs,
+        rowData: [],
+        dontUseScrolls: true, // because so little data, no need to use scroll bars,
+        angularCompileRows: true
+    };
+
+    $http.get("slot.php?id=" + id).success(function(result) {
+        $scope.gridOptions.rowData = result.raumbedarf;
+        $scope.slot = result.slot;
+        frei = result.frei;
+        $scope.gridOptions.api.onNewRows();
+    });
+
+    function raumAuswahl(params) {
+        var html = '<span ng-click="startEditing()">{{data.'+params.colDef.field+' || "nicht zugewiesen"}}</span> ';
+        params.$scope.startEditing = function() {
+            var date = $filter("date");
+            console.log(params);
+            var offset = $(params.eGridCell).offset();
+            var edit = document.createElement("div");
+            edit.className = "raumsel";
+            edit.style.position="absolute";
+            edit.style.top = offset.top+"px";
+            edit.style.left = offset.left+"px";
+            document.body.appendChild(edit);
+            setTimeout(function() {
+                $(document.body).one("click", function(e) {
+                    if (e.target.getAttribute("data-raumnr")) {
+                        params.$scope.$apply(function() {
+                            params.data[params.colDef.field] = e.target.getAttribute("data-raumnr");
+                        });
+                    }
+                    edit.parentElement.removeChild(edit);
+                });
+            },0)
+            for(var k in frei) {
+                var d = frei[k];
+                var uhr = date(new Date(d.von), "HH:mm")+"-"+date(new Date(d.bis),"HH:mm");
+                $("<div>").attr("data-raumnr", d.raum_nummer).toggleClass("belegt",!!d.belegt)
+                .text(d.raum_nummer+" ("+uhr+")"+(d.belegt?" - "+d.belegt:"")).appendTo(edit);
+            }
+
+        }
+        return html;
+    }
+
+});
+
+</script>
+</head>
+<body ng-app="oplanSlot" >
+
+<div ng-controller="OplanSlotController">
+<div style="border:1px solid red;padding:10px;" ng-if="error">
+{{error}}
+</div>
+<div ng-if="!error">
+<h1>{{slot.von}} - {{slot.bis}}</h1>
+<div ag-grid="gridOptions" class="ag-fresh" style="height: 100%"></div>
+</div>
+
+</div>
+
+
+</body>
+</html>

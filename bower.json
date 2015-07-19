@@ -1,0 +1,23 @@
+{
+  "name": "oplan",
+  "version": "0.0.1",
+  "authors": [
+    "Max Weller <max.weller@d120.de>"
+  ],
+  "homepage": "https://labs.max-weller.de/oplan/",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.4.3",
+    "angular-ui-calendar": "~1.0.1",
+    "ag-grid": "~1.11.1",
+    "jquery": "~2.1.4",
+    "angular-route": "~1.4.3"
+  }
+}

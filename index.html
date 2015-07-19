@@ -1,0 +1,129 @@
+<html ng-app="oplanApp">
+<head>
+  <meta charset="utf-8">
+  <base href="/oplan/">
+  <title ng-bind="title">Oplan</title>
+  <link rel="stylesheet" href="bower_components/ag-grid/dist/angular-grid.css">
+  <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-fresh.css">
+  <link rel="stylesheet" href="bower_components/fullcalendar/dist/fullcalendar.css"/>
+  <link rel="stylesheet" href="style.css">
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="bower_components/angular/angular.js"></script>
+  <script src="angular-locale_de-de.js"></script>
+  <script src="bower_components/ag-grid/dist/angular-grid.js"></script>
+  <script src="bower_components/angular-route/angular-route.js"></script>
+  <script src="bower_components/moment/min/moment.min.js"></script>
+  <script src="bower_components/angular-ui-calendar/src/calendar.js"></script>
+  <script src="bower_components/fullcalendar/dist/fullcalendar.min.js"></script>
+  <script type="text/javascript" src="bower_components/fullcalendar/dist/gcal.js"></script>
+  
+  <script src="oplanApp.js"></script>
+  <script src="oplanBackend.js"></script>
+  <script src="oplanSlot.js"></script>
+  <script src="oplanRaumListe.js"></script>
+  <script src="oplanTimetable.js"></script>
+</head>
+<body>
+  <div id="menu">
+    <a href="#/">Zurück zur Übersicht</a>
+  </div>
+  
+<div ng-view></div>
+
+<script type="text/ng-template" id="partials/slot.html">
+
+<div style="border:1px solid red;padding:10px;" ng-if="error">
+{{error}}
+</div>
+<div ng-if="!error">
+<button style="float:right" ng-click="addRow()">Zeile hinzufügen</button>
+<h1>{{slot.von|date:"EEE dd.MM. HH:mm"}} - {{slot.bis|date:"HH:mm"}}</h1>
+<div ag-grid="gridOptions" class="ag-fresh" style="height: 100%;"></div>
+
+<a href="javascript:" ng-click="powertools=!powertools">
+Power tools...</a><br>
+<div ng-show="powertools">copyPaste:  <input type="button" ngclick="copyPasteApply()" value="apply!"><br>
+<textarea ng-model="copyPaste" style="width:100%" onclick="this.select()"></textarea>
+
+
+</div><br>
+</div>
+
+</script>
+
+<script type="text/ng-template" id="partials/raumliste.html">
+<h1>Alle verfügbaren Räume</h1>
+<div ag-grid="gridOptions" class="ag-fresh" style="height: 90%; width: 100%;"></div>
+
+</script>
+
+<script type="text/ng-template" id="partials/raumlistetucan.html">
+<h1>Raumliste - Druckansicht</h1>
+<table class="tucan">
+<thead>
+<tr><th>Datum</th><th>Von</th><th>Bis</th><th>Raum</th></tr>
+</thead>
+<tr ng-repeat="row in data">
+<td><nobr>{{row[0].von|date:"EEE, dd. MMM yyyy"}}</nobr></td>
+<td>{{row[0].von_time}}</td>
+<td>{{row[0].bis_time}}</td>
+<td>
+  <span ng-repeat="room in row"><span ng-if="!$first">, </span>
+    <span><a href="#/raumplan/{{room.raum_nummer}}?w={{room.von|date:'ww'}}">{{room.raum_nummer}}</a></span></span>
+</td>
+</tr>
+</table>
+
+</script>
+<script type="text/ng-template" id="partials/timetable.html">
+<div ng-if="slotId" class="slotDetails">
+<button ng-click="closeDetails()">Close</button>
+<div ng-controller="OplanSlotCtrl" ng-include="'partials/slot.html'"></div>
+</div>
+
+<h1>Stundenplan {{gruppe}}</h1>
+<div ui-calendar="calendar" ng-model="eventSources" calendar="timetable">
+
+</script>
+<script type="text/ng-template" id="partials/room.html">
+
+<h1 style="float:left; margin:0 20px 0 0;">Raumplan {{room}}  </h1>
+<div style="float:left">
+Snap: <select ng-model="calendar.snapDuration"><option>0:05</option><option>0:10</option><option>0:15</option><option>0:30</option></select>
+<button ng-click="updateAusVerw()">Buchungszeiten laden</button>
+
+<br>
+<span>
+Plätze: {{raumInfo.platz}} | Typ: {{raumInfo.raumtyp}} | 
+</span>
+<span ng-if="raumInfo.verw_mit=='tucan'">
+<b>TUCaN</b>: <a href="{{raumInfo.verw_link}}">Raumdetails</a>, 
+<a href="https://www.tucan.tu-darmstadt.de/scripts/mgrqcgi?APPNAME=CampusNet&PRGNAME=SCHEDULER&ARGUMENTS=-N000000000000001,-N000385,-A{{calStart|date:'dd.MM.yyyy'}},-A,-N1,-N{{raumInfo.verw_id}}">Termine</a> |
+</span>
+<i>
+Kommentar: {{raumInfo.verw_kommentar}}
+</i>
+
+</div>
+<hr style="clear:both">
+<div ui-calendar="calendar" ng-model="eventSources" calendar="timetable">
+
+</script>
+
+<script type="text/ng-template" id="partials/home.html">
+<h1>Oplan</h1>
+
+<ul>
+<li>Stundenpläne:
+<a ng-href="#/stundenplan/bachelor?w=41">Bachelor</a>
+<a ng-href="#/stundenplan/master_de?w=41">Master DE</a>
+<a ng-href="#/stundenplan/master_en?w=41">Master  EN</a>
+</li>
+
+<li><a href="#/raumliste">Alle verfügbaren Räume</a> | <a href="#/raumliste/tucan">Druckansicht</a></li>
+
+
+</script>
+
+</body>
+</html>
