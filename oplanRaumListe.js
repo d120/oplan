@@ -9,9 +9,9 @@ module.controller("OplanRaumListeCtrl", function($scope, $http, $location, $filt
         {headerName: "Tag", field: "von_day", editable: true, width: 80},
         {headerName: "von", field: "von_time", editable: true, width: 80},
         {headerName: "bis", field: "bis_time", editable: true, width: 80},
-        {headerName: "Status", field: "status", editable: true},
-        {headerName: "Kommentar", field: "kommentar", editable: true},
-        {headerName: "Belegt", field: "belegt", editable: false, cellClicked: onClick}
+        {headerName: "Status", field: "status", editable: true, width: 80},
+        {headerName: "Kommentar", field: "kommentar", editable: true, width: 190},
+        {headerName: "Belegt", field: "belegt", editable: false, width: 260, cellClicked: onClick, cellClass: 'linkstyle'}
     ];
 
     var frei = [];
@@ -28,15 +28,33 @@ module.controller("OplanRaumListeCtrl", function($scope, $http, $location, $filt
         groupUseEntireRow: true,
         enableColResize: true
     };
-
+    
     $http.get("raum.php").success(function(result) {
+        for(var k in result.frei) {
+            if (!result.frei[k].belegt) result.frei[k].belegt = "(frei)";
+        }
         $scope.gridOptions.rowData = result.frei;
-        $scope.gridOptions.api.onNewRows();
         $scope.gridOptions.api.setSortModel([
-          {field: 'raum_nummer', sort: 'asc'},
-          {field: 'von_time', sort: 'asc'}
+            {field: 'raum_nummer', sort: 'asc'},
+            {field: 'von_time', sort: 'asc'}
         ]);
+        try {
+            var opts = JSON.parse(window.localStorage.raumlisteViewOpts);
+            $scope.gridOptions.groupKeys = opts.group;
+            $scope.gridOptions.api.onNewCols();
+            console.log($scope.gridOptions);
+            $scope.gridOptions.api.setSortModel(opts.sort);
+        }catch(ex){}
+        $scope.gridOptions.api.onNewRows();
     });
+    
+    $scope.persistView = function() {
+        window.localStorage.raumlisteViewOpts = JSON.stringify({
+            sort: $scope.gridOptions.api.getSortModel(),
+            group: $scope.gridOptions.api.getColumnState().filter(function(x) { return x.pivotIndex!==null; }).sort(function(a,b){return b.pivotIndex-a.pivotIndex;}).map(function(x){ return x.colId })
+        });
+
+    };
 
     function onClick(e) {
         $scope.$apply(function() {

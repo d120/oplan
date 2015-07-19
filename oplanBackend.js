@@ -17,8 +17,8 @@ angular.module("oplanBackend", [])
         },
         
         belegeRaum: function(nummer, slotId) {
-            return this.doPost("slot.php?id="+params.data.id, 
-              {apply: params.data.raum});
+            return this.doPost("slot.php?id="+slotId, 
+              {apply: nummer});
         },
         
         setRaumFrei: function(id, nummer, von, bis, kom, status) {

@@ -3,7 +3,7 @@ var module = angular.module("oplanSlot", ["angularGrid"]);
 module.config(function($locationProvider) {
     //$locationProvider.html5Mode(true);
 });
-module.controller("OplanSlotCtrl", function($scope, $http, $filter, $routeParams) {
+module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routeParams) {
     if (!$scope.slotId && $routeParams.id) {
         $scope.slotId = $routeParams.id;
     }
@@ -26,7 +26,7 @@ module.controller("OplanSlotCtrl", function($scope, $http, $filter, $routeParams
     };
     
     $scope.$watch('slotId' , function() {
-        $http.get("slot.php?id=" + $scope.slotId).success(function(result) {
+        oplanHttp.doGet("slot", { "id" : $scope.slotId }).success(function(result) {
             $scope.gridOptions.rowData = result.raumbedarf;
             $scope.slot = result.slot;
             $scope.slot.von = new Date($scope.slot.von);
@@ -35,11 +35,30 @@ module.controller("OplanSlotCtrl", function($scope, $http, $filter, $routeParams
             $scope.gridOptions.api.onNewRows();
         });
     });
+    console.log($scope);
+    $scope.copyPaste = "";
     $scope.$watch('gridOptions.rowData', function() {
         var out=[];
         for(var i=0; i<$scope.gridOptions.rowData.length; i++) out [i] = $scope.gridOptions.rowData[i].raum;
         $scope.copyPaste = out.join(";");
     });
+    
+    $scope.copyPasteApply = function() {
+        "use strict";
+        var it = $scope.copyPaste.split(/;/), rows = $scope.gridOptions.rowData;
+        console.log($scope.copyPaste,it);
+        if (it.length != rows.length) {alert("Item count mismatch");return;}
+        for(var i=0; i<rows.length; i++) {
+            let index=i;
+            oplanHttp.belegeRaum(it[i], rows[i].id)
+            .success(function() {
+                rows[index].raum = it[index];
+            })
+            .error(function() {
+                rows[index].raum ="error";
+            });
+        }
+    }
     
     $scope.addRow = function() {
         var rows = $scope.gridOptions.rowData;
@@ -51,9 +70,17 @@ module.controller("OplanSlotCtrl", function($scope, $http, $filter, $routeParams
         });
         $scope.gridOptions.api.onNewRows();
     }
+    
+    function raumDetails(raum) {
+        var week = moment($scope.slot.von).isoWeek();
+        window.open("#/raumplan/" + raum+"?w="+week,"","width=850,height=730");
+    }
 
     function raumAuswahl(params) {
-        var html = '<span ng-click="startEditing()">{{data.'+params.colDef.field+' || "nicht zugewiesen"}}</span> ';
+        var html = '<span ng-click="startEditing()" ng-right-click="details()">{{data.'+params.colDef.field+' || "nicht zugewiesen"}}</span> ';
+        params.$scope.details = function() {
+            raumDetails(params.data.raum);
+        }
         params.$scope.startEditing = function() {
             var date = $filter("date");
             console.log(params);
@@ -77,12 +104,7 @@ module.controller("OplanSlotCtrl", function($scope, $http, $filter, $routeParams
                             var oldValue = params.data.raum;
                             params.data.raum = e.target.getAttribute("data-raumnr");
                             params.eGridCell.style.background="#ccc";
-                            $http({
-                                method: 'POST',
-                                url: "slot.php?id="+params.data.id,
-                                data: $.param({apply: params.data.raum}),
-                                headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-                            })
+                            oplanHttp.belegeRaum(params.data.raum, params.data.id)
                             .success(function() {
                                 params.eGridCell.style.background="green";
                                 setTimeout(function() { params.eGridCell.style.background=""; },200);
@@ -100,6 +122,13 @@ module.controller("OplanSlotCtrl", function($scope, $http, $filter, $routeParams
                         });
                     }
                     edit.parentElement.removeChild(edit);
+                });
+                $(edit).on("contextmenu", function(e) {
+                    var nr = e.target.getAttribute("data-raumnr");
+                    if (nr) {
+                        raumDetails(nr);
+                        return false;
+                    }
                 });
             },0)
             for(var k in frei) {

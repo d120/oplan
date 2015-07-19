@@ -1,6 +1,6 @@
 
 body, table { font: 10pt 'Helvetica Neue',Arial; }
-#menu { float: right; }
+#menu { position: absolute; right: 5px; top: 8px; }
 
 .absplan { border:1px solid #ddd; }
 .absplan .termin { background: #fea; position: absolute; background-color:rgba(170,170,255,0.5); border-radius: 5px; border: 1px solid rgba(50,150,150,0.5); overflow: hidden; }
@@ -26,3 +26,5 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 .tucan tr td { padding: 3px 10px; }
 .tucan th { background: #eee; color: #333; text-align: left; padding: 5px 10px; }
 .tucan a{ color: black; }
+
+.linkstyle {color:blue; text-decoration:underline;}

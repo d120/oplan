@@ -35,7 +35,7 @@ if ($download) {
 }
 //echo $result;
 $regex1 = '|<tr class="tbdata">.*?</tr>\s+<tr>.*?</tr>|s';
-$regex2 = '|<td name="roomBuilding">.*href="(?P<verw_link>[^"]+)"[^>]*>(?P<nummer>[^>]+)</a>.*' .
+$regex2 = '|<td name="roomBuilding">.*href="(?P<verw_link>[^"]+)"[^>]*>(?P<nummer>[^>-]+)(?:-(?P<kommentar3>[^)]+))?</a>.*' .
   '<td name="roomType">(?P<raumtyp>[^<(]+)(?:\\((?P<kommentar2>[^)]+)\\)?)?</td>.*' .
   '<td name="seats">(?P<platz>[^<]*)</td>.*' .
   'roomAppointmentsLink" href="[^"]*-N1,-N(?P<verw_id>[0-9]+)".*' .
@@ -62,7 +62,7 @@ foreach($rows[0] as $row) {
     //var_dump($matches);
     $nr = str_replace("/", " ", $room['nummer']);
     $room['verw_link'] = $tucan_root.html_entity_decode($room['verw_link']);
-    $komm = $room['kommentar1'] . '; ' . $room['kommentar2'];
+    $komm = $room['kommentar1'] . '; ' . $room['kommentar2'] . '; ' . $room['kommentar3'];
     $stmt->execute(array($nr, $room['platz'], $room['verw_id'], $room['verw_link'], $komm, $room['raumtyp']));
   }
 }

@@ -16,18 +16,33 @@ if (count($_POST)>0) {
   
   if (isset($_POST["apply"])) {
     $raum = $db->quote($_POST["apply"]);
-    $overlap = $db->query("SELECT * FROM raumbedarf b WHERE b.raum = $raum AND 
-        (b.von < '$slot[bis]') AND (b.bis > '$slot[von]')");
-    if (!$overlap) {header("HTTP/1.1 500 SQL Error"); die("error: ".$db->errorInfo()[2]);}
+    
+    
+    if ($_POST["apply"] != "") {
+        $frei = $db->query("SELECT * FROM raumfrei  WHERE raum_nummer = $raum AND
+            (date_add(bis,interval 10 minute) >= '$slot[bis]') AND (date_add(von,interval -10 minute) <= '$slot[von]')
+            AND blocked=0 ");
+        
+        $overlap = $db->query("SELECT * FROM raumbedarf b WHERE b.raum = $raum AND 
+            (b.von < '$slot[bis]') AND (b.bis > '$slot[von]')");
+        if (!$overlap) {header("HTTP/1.1 500 SQL Error"); die("error: ".$db->errorInfo()[2]);}
 
-    if ($overlap->rowCount() > 0) {
-        header("HTTP/1.1 409 Conflict");
-        echo json_encode(array("success" => false, "overlaps" => $overlap->fetchAll(PDO::FETCH_ASSOC)));
-    } else {
-        $ok = $db->exec("UPDATE raumbedarf SET raum = $raum WHERE id = $id");
-        if (!$ok) {header("HTTP/1.1 500 SQL Error"); die("error(2): ".$db->errorInfo()[2]);}
-        echo json_encode(array("success" => true));
+        if ($frei->rowCount() == 0) {
+            header("HTTP/1.1 404 Not found");
+            echo json_encode(array("success" => false, "not_free" => true));
+            return;
+        } else if ($overlap->rowCount() > 0) {
+            header("HTTP/1.1 409 Conflict");
+            echo json_encode(array("success" => false, "overlaps" => $overlap->fetchAll(PDO::FETCH_ASSOC)));
+            return;
+        }
     }
+    
+    
+    $ok = $db->exec("UPDATE raumbedarf SET raum = $raum WHERE id = $id");
+    if (!$ok) {header("HTTP/1.1 500 SQL Error"); die("error(2): ".$db->errorInfo()[2]);}
+    echo json_encode(array("success" => true));
+    
     exit;
   }
 

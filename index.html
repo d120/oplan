@@ -25,6 +25,7 @@
 </head>
 <body>
   <div id="menu">
+    <input type="text" placeholder="Gehe zu Raum..." ng-model="gotoRoomText" ng-keypress="gotoRoomKey($event)"> 
     <a href="#/">Zurück zur Übersicht</a>
   </div>
   
@@ -40,19 +41,23 @@
 <h1>{{slot.von|date:"EEE dd.MM. HH:mm"}} - {{slot.bis|date:"HH:mm"}}</h1>
 <div ag-grid="gridOptions" class="ag-fresh" style="height: 100%;"></div>
 
+<br>
 <a href="javascript:" ng-click="powertools=!powertools">
-Power tools...</a><br>
-<div ng-show="powertools">copyPaste:  <input type="button" ngclick="copyPasteApply()" value="apply!"><br>
-<textarea ng-model="copyPaste" style="width:100%" onclick="this.select()"></textarea>
-
-
-</div><br>
+Power tools...</a><br><!---->
+<div ng-show="powertools">copyPaste:  <input type="button" ng-click="copyPasteApply()" value="apply!"><br>
+<textarea ng-model="$parent.$parent.copyPaste" style="width:100%"></textarea>
+</div><br><br>
 </div>
 
 </script>
 
 <script type="text/ng-template" id="partials/raumliste.html">
-<h1>Alle verfügbaren Räume</h1>
+<h1 style="float:left; margin:0 20px 0 0;">Alle verfügbaren Räume </h1>
+<div style="float:left">
+<button ng-click="persistView()">View speichern</button>
+</div>
+
+<hr style="clear:both">
 <div ag-grid="gridOptions" class="ag-fresh" style="height: 90%; width: 100%;"></div>
 
 </script>
@@ -77,7 +82,7 @@ Power tools...</a><br>
 </script>
 <script type="text/ng-template" id="partials/timetable.html">
 <div ng-if="slotId" class="slotDetails">
-<button ng-click="closeDetails()">Close</button>
+<button ng-click="closeDetails()" style="float:right;margin: 18px 0 0 10px;">Schließen</button>
 <div ng-controller="OplanSlotCtrl" ng-include="'partials/slot.html'"></div>
 </div>
 
@@ -94,12 +99,13 @@ Snap: <select ng-model="calendar.snapDuration"><option>0:05</option><option>0:10
 
 <br>
 <span>
-Plätze: {{raumInfo.platz}} | Typ: {{raumInfo.raumtyp}} | 
+Plätze: {{raumInfo.platz}} | Typ: {{raumInfo.raumtyp}} 
 </span>
 <span ng-if="raumInfo.verw_mit=='tucan'">
-<b>TUCaN</b>: <a href="{{raumInfo.verw_link}}">Raumdetails</a>, 
-<a href="https://www.tucan.tu-darmstadt.de/scripts/mgrqcgi?APPNAME=CampusNet&PRGNAME=SCHEDULER&ARGUMENTS=-N000000000000001,-N000385,-A{{calStart|date:'dd.MM.yyyy'}},-A,-N1,-N{{raumInfo.verw_id}}">Termine</a> |
+| <b>TUCaN</b>: <a href="{{raumInfo.verw_link}}">Raumdetails</a>, 
+<a href="https://www.tucan.tu-darmstadt.de/scripts/mgrqcgi?APPNAME=CampusNet&PRGNAME=SCHEDULER&ARGUMENTS=-N000000000000001,-N000385,-A{{calStart|date:'dd.MM.yyyy'}},-A,-N1,-N{{raumInfo.verw_id}}">Termine</a>
 </span>
+<br>
 <i>
 Kommentar: {{raumInfo.verw_kommentar}}
 </i>
@@ -118,6 +124,7 @@ Kommentar: {{raumInfo.verw_kommentar}}
 <a ng-href="#/stundenplan/bachelor?w=41">Bachelor</a>
 <a ng-href="#/stundenplan/master_de?w=41">Master DE</a>
 <a ng-href="#/stundenplan/master_en?w=41">Master  EN</a>
+<a ng-href="#/stundenplan/orga?w=41">Orga</a>
 </li>
 
 <li><a href="#/raumliste">Alle verfügbaren Räume</a> | <a href="#/raumliste/tucan">Druckansicht</a></li>
