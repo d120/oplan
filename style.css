@@ -9,7 +9,7 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 .termin.ok { background: rgba(200,255,255,0.4); }
 .termin.frei { background: rgba(255,255,200,0.4); }
 
-.raumsel { border: 1px solid #ddd; overflow-y: auto;  box-shadow: 2px 2px 4px #444; background: white; padding: 5px 0; min-width: 200px; z-index: 12; }
+.raumsel { border: 1px solid #ddd; overflow-y: auto;  box-shadow: 1px 1px 6px #999; background: white; padding: 5px 0; min-width: 200px; z-index: 12; }
 .raumsel div { padding: 8px 15px; cursor: default; }
 .raumsel div:hover { background: #eee; }
 .raumsel div.belegt, .raumsel div.belegt:hover { color: #777; background: inherit; }
@@ -17,8 +17,8 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 .ag-fresh .ag-group-cell-entire-row { background: #ddd; background: linear-gradient(to bottom, #ccd 0%, #eef 100%); }
 
 .slotDetails {
-  position: absolute; top: 50px; right: 10%; border: 1px solid #ddd; background: rgba(255,255,255,0.95);
-  padding: 10px 20px; z-index: 10; max-height: 80%; overflow-y: auto;
+  position: absolute; top: 50px; right: 10%; background: white;
+  padding: 10px 20px; z-index: 10; max-height: 80%; overflow-y: auto; box-shadow: 1px 1px 20px #999; 
 }
 
 .tucan { border-collapse: collapse; }
@@ -28,3 +28,13 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 .tucan a{ color: black; }
 
 .linkstyle {color:blue; text-decoration:underline;}
+
+.messageBar { position: fixed; top: 0; left: 0; right: 0; padding: 10px; background: #FDD835; color: white; font-size: 12pt; 
+      _animation: slide 0.5s forwards;
+}
+@_keyframes slide {
+    0% { top: -20px; }
+    100% { top: 0; }
+}
+.messageBar.error { background: #E53935;  }
+.messageBar.success { background: #43a047;  }

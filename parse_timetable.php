@@ -1,6 +1,7 @@
 <?php
 require_once "init.php";
 header("Content-Type: text/plain");
+auth_required();
 
 $startTs = intval($_POST["start"]);
 $q = $db->prepare("SELECT * FROM raum WHERE nummer = ?");

@@ -1,4 +1,5 @@
-angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable", "oplanSlot", "oplanBackend"])
+angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable", 
+                            "oplanSlot", "oplanBackend", "httpIndicator"])
 
 .config(['$routeProvider',
   function($routeProvider) {
@@ -51,10 +52,22 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable", "opla
             $location.path("/raumplan/" + e.target.value).search("w", 41);
         }
     }
+
+    if (localStorage.auth) {
+      $rootScope.auth = localStorage.auth;
+    }
   }])
   
-.controller('OplanHomeCtrl', function($scope) {
-    
+.controller('OplanHomeCtrl', function($scope, $rootScope) {
+    $scope.username = $rootScope.auth ? atob($rootScope.auth).split(/:/)[0] : '';
+    $scope.login = function() {
+      $rootScope.auth = btoa($scope.username + ":" + $scope.password);
+      localStorage.auth = $rootScope.auth;
+    }
+    $scope.logout = function() {
+      $rootScope.auth = null;
+      localStorage.auth = "";
+    }
   })
 
 .directive('ngRightClick', function($parse) {

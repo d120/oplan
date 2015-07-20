@@ -1,6 +1,7 @@
 <?php
 require_once "init.php";
 header("Content-Type: text/plain");
+auth_required();
 
 $download =false;
 $download=true;

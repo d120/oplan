@@ -3,15 +3,16 @@ var module = angular.module("oplanSlot", ["angularGrid"]);
 module.config(function($locationProvider) {
     //$locationProvider.html5Mode(true);
 });
-module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routeParams) {
+module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routeParams, messageBar) {
     if (!$scope.slotId && $routeParams.id) {
         $scope.slotId = $routeParams.id;
     }
     if (!$scope.slotId) { $scope.error = "Bitte Parameter id angeben"; return; }
     var columnDefs = [
-        {headerName: "Kommentar", field: "kommentar", editable: true, width: 240},
-        {headerName: "Min. Plätze", field: "min_platz", editable: true, width: 90},
-        {headerName: "Raumnr. Präferenz", field: "praeferenz", editable: true, width: 140},
+        {headerName: "Kommentar", field: "kommentar", editable: true, width: 240, cellValueChanged: onEdit},
+        {headerName: "Min. Plätze", field: "min_platz", editable: true, width: 90, cellValueChanged: onEdit},
+        {headerName: "Zielgruppe", field: "zielgruppe", editable: true, width: 90, cellValueChanged: onEdit},
+        {headerName: "Raumnr. Präferenz", field: "praeferenz", editable: true, width: 140, cellValueChanged: onEdit},
         {headerName: "Raumnr. zugeteilt", field: "raum", cellRenderer: raumAuswahl, width: 140  }
     ];
 
@@ -24,17 +25,17 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         dontUseScrolls: true, // because so little data, no need to use scroll bars,
         angularCompileRows: true
     };
-    
-    $scope.$watch('slotId' , function() {
+    function loadLines() {
         oplanHttp.doGet("slot", { "id" : $scope.slotId }).success(function(result) {
             $scope.gridOptions.rowData = result.raumbedarf;
             $scope.slot = result.slot;
-            $scope.slot.von = new Date($scope.slot.von);
-            $scope.slot.bis = new Date($scope.slot.bis);
+            $scope.slot.von_dt = new Date($scope.slot.von);
+            $scope.slot.bis_dt = new Date($scope.slot.bis);
             frei = result.frei;
             $scope.gridOptions.api.onNewRows();
         });
-    });
+    }
+    $scope.$watch('slotId' , loadLines);
     console.log($scope);
     $scope.copyPaste = "";
     $scope.$watch('gridOptions.rowData', function() {
@@ -49,14 +50,15 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         console.log($scope.copyPaste,it);
         if (it.length != rows.length) {alert("Item count mismatch");return;}
         for(var i=0; i<rows.length; i++) {
-            let index=i;
-            oplanHttp.belegeRaum(it[i], rows[i].id)
-            .success(function() {
-                rows[index].raum = it[index];
-            })
-            .error(function() {
-                rows[index].raum ="error";
-            });
+            (function(index) {
+                oplanHttp.belegeRaum(it[i], rows[i].id)
+                .success(function() {
+                    rows[index].raum = it[index];
+                })
+                .error(function() {
+                    rows[index].raum ="error";
+                });
+            })(i);
         }
     }
     
@@ -65,19 +67,27 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         var last = rows[rows.length - 1];
         var komm = last.kommentar;
         komm = komm.substr(0, komm.length-1) + String.fromCharCode(komm.charCodeAt(komm.length-1)+1);
-        rows.push({
-            kommentar: komm, min_platz: last.min_platz, praeferenz: "", raum: ""
+        oplanHttp.newSlot($scope.slot.von, $scope.slot.bis, komm, last.zielgruppe)
+        .success(function(data) {
+            rows.push({
+                id: data.id, kommentar: komm, min_platz: last.min_platz, praeferenz: "", raum: "", zielgruppe: last.zielgruppe
+            });
+            $scope.gridOptions.api.onNewRows();
+            messageBar.show("success", "Neue Zeile angelegt.", 2500);
         });
-        $scope.gridOptions.api.onNewRows();
+    }
+    
+    function onEdit(params) {
+        oplanHttp.updateSlot(params.data.id, params.data);
     }
     
     function raumDetails(raum) {
-        var week = moment($scope.slot.von).isoWeek();
+        var week = moment($scope.slot.von_dt).isoWeek();
         window.open("#/raumplan/" + raum+"?w="+week,"","width=850,height=730");
     }
 
     function raumAuswahl(params) {
-        var html = '<span ng-click="startEditing()" ng-right-click="details()">{{data.'+params.colDef.field+' || "nicht zugewiesen"}}</span> ';
+        var html = '<span ng-click="startEditing()" ng-right-click="details()" class="linkstyle">{{data.'+params.colDef.field+' || "nicht zugewiesen"}}</span> ';
         params.$scope.details = function() {
             raumDetails(params.data.raum);
         }
@@ -88,7 +98,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             var edit = document.createElement("div");
             edit.className = "raumsel";
             edit.style.position="absolute";
-            var elHeight = frei.length*35;
+            var elHeight = (frei.length+1)*35;
             var height = Math.min(elHeight, window.innerHeight - offset.top - 30);
             if (height < Math.min(elHeight,200)) {
               height = Math.min(elHeight,200); offset.top = window.innerHeight - height - 30;
@@ -99,7 +109,12 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             document.body.appendChild(edit);
             setTimeout(function() {
                 $(document.body).one("click", function(e) {
-                    if (e.target.getAttribute("data-raumnr")) {
+                    if (e.target.getAttribute("data-delete") !== null) {
+                        oplanHttp.doPost("slot.php?id=" + params.data.id, { delete: true })
+                        .success(function() {
+                            loadLines(); messageBar.show("success", "Zeile wurde gelöscht.", 2500);
+                        });
+                    } else if (e.target.getAttribute("data-raumnr") !== null) {
                         params.$scope.$apply(function() {
                             var oldValue = params.data.raum;
                             params.data.raum = e.target.getAttribute("data-raumnr");
@@ -112,10 +127,8 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
                             .error(function(data) {
                                 params.eGridCell.style.background="";
                                 params.data.raum = oldValue;
-                                if (data && data.overlaps) {
-                                  alert("Konnte Raum nicht zuweisen, da schon belegt: "+data.overlaps[0].kommentar+" - "+data.overlaps[0].von);
-                                } else {
-                                    alert("Allgemeiner Fehler");
+                                if (data && data.error == "overlaps") {
+                                    alert("Konnte Raum nicht zuweisen, da schon belegt: "+data.error_details[0].kommentar+" - "+data.error_details[0].von);
                                 }
                             });
                             
@@ -137,6 +150,8 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
                 $("<div>").attr("data-raumnr", d.raum_nummer).toggleClass("belegt",!!d.belegt)
                 .text(d.raum_nummer+" ("+uhr+")"+(d.belegt?" - "+d.belegt:"")).appendTo(edit);
             }
+            $("<div>").attr("data-raumnr", "").text("(nicht zugewiesen)").appendTo(edit);
+            $("<div>").attr("data-delete", "").text("(Zeile löschen)").appendTo(edit);
 
         }
         return html;

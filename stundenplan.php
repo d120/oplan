@@ -9,7 +9,7 @@ if (isset($_GET["g"])) {
     $start = date("Y-m-d",$kw);
     $end = date("Y-m-d",$kw+3600*24*7);
     $res = $db->query("
-    SELECT von,bis,id,concat(count(if(raum<>'',1,null)),'/',count(id)) anz,if(count(if(raum = '',1,null))>0,'wunsch','ok') typ ,min_platz,zielgruppe,kommentar,
+    SELECT von,bis,id,concat(count(if(raum<>'',1,null)),'/',count(id)) anz,if(count(if(raum = '',1,null))>0,'wunsch','ok') typ ,sum(min_platz) min_platz,zielgruppe,kommentar,
     group_concat(concat(kommentar,'|',praeferenz,'|',raum) separator '<br>') zuteilung 
     FROM raumbedarf WHERE zielgruppe LIKE " . $db->quote("%$_GET[g]%") . " AND von > '$start' AND von < '$end' GROUP BY von,bis");
     if(!$res) echo $db->errorInfo()[2];

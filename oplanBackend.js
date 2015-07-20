@@ -21,6 +21,28 @@ angular.module("oplanBackend", [])
               {apply: nummer});
         },
         
+        updateSlot: function(slotId, data) {
+            return this.doPost("slot.php?id="+slotId, 
+              data);
+        },
+        
+        moveSlot: function(slotId, start, end, moveAll) {
+            return this.doPost("slot.php?id="+slotId, {
+                von: start.format ? start.format("YYYY-MM-DD HH:mm:ss") : start, 
+                bis: end.format ? end.format("YYYY-MM-DD HH:mm:ss") : end, 
+                all: moveAll ? "true" : ""
+            });
+        },
+        
+        newSlot: function(start, end, desc, gruppe) {
+            return this.doPost('slot.php', { 
+                create_von: start.format ? start.format("YYYY-MM-DD HH:mm:ss") : start, 
+                create_bis: end.format ? end.format("YYYY-MM-DD HH:mm:ss") : end,
+                kommentar: desc,
+                zielgruppe: gruppe
+            });
+        },
+        
         setRaumFrei: function(id, nummer, von, bis, kom, status) {
             if (!von.format) von=moment(von);
             if (!bis.format) bis=moment(bis);

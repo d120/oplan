@@ -22,10 +22,11 @@
   <script src="oplanSlot.js"></script>
   <script src="oplanRaumListe.js"></script>
   <script src="oplanTimetable.js"></script>
+  <script src="httpIndicator.js"></script>
 </head>
 <body>
   <div id="menu">
-    <input type="text" placeholder="Gehe zu Raum..." ng-model="gotoRoomText" ng-keypress="gotoRoomKey($event)"> 
+    <input type="text" placeholder="Gehe zu Raum..." ng-model="gotoRoomText" size="15" ng-keypress="gotoRoomKey($event)">&nbsp;
     <a href="#/">Zurück zur Übersicht</a>
   </div>
   
@@ -38,7 +39,7 @@
 </div>
 <div ng-if="!error">
 <button style="float:right" ng-click="addRow()">Zeile hinzufügen</button>
-<h1>{{slot.von|date:"EEE dd.MM. HH:mm"}} - {{slot.bis|date:"HH:mm"}}</h1>
+<h1>{{slot.von_dt|date:"EEE dd.MM. HH:mm"}} - {{slot.bis_dt|date:"HH:mm"}}</h1>
 <div ag-grid="gridOptions" class="ag-fresh" style="height: 100%;"></div>
 
 <br>
@@ -128,7 +129,16 @@ Kommentar: {{raumInfo.verw_kommentar}}
 </li>
 
 <li><a href="#/raumliste">Alle verfügbaren Räume</a> | <a href="#/raumliste/tucan">Druckansicht</a></li>
+</ul>
 
+<form ng-show="!auth">
+<input type="text" ng-model="username"> <input type="password" ng-model="password"> 
+<button ng-click="login()">Login</button>
+</form>
+<div ng-show="auth">
+Hallo {{username}}, du bist eingeloggt.
+<button ng-click="logout()">Logout</button>
+</div>
 
 </script>
 

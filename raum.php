@@ -5,6 +5,7 @@ $db->exec("SET lc_time_names = 'de_DE';");
 header("Content-Type: application/json");
 
 if (count($_POST)>0) {
+  auth_required();
   if (isset($_POST["id"])) {
       $db->prepare("UPDATE raumfrei SET raum_nummer=?,von=?,bis=?,kommentar=?,status=? WHERE id=?")
         ->execute(array($_POST["raum_nummer"], $_POST["von"], $_POST["bis"], $_POST["kommentar"], $_POST["status"], $_POST["id"]));

@@ -1,11 +1,11 @@
 angular.module('oplanTimetable', ['ui.calendar'])
 
-.controller('OplanTimetableCtrl', ['$scope', '$routeParams', 'oplanHttp', 'uiCalendarConfig', '$location', '$interval',
-  function($scope, $routeParams, oplanHttp, uiCalendarConfig, $location, $interval) {
+.controller('OplanTimetableCtrl', ['$scope', '$routeParams', 'oplanHttp', 'uiCalendarConfig', '$location', '$interval', 'messageBar', '$window',
+  function($scope, $routeParams, oplanHttp, uiCalendarConfig, $location, $interval, messageBar, $window) {
     $scope.gruppe = $routeParams.gruppe;
     /* config object */
     $scope.calendar = {
-        height: 650,
+        height: $($window).height() - 70,
         firstDay: 1,
         weekNumbers: true,
         editable: true,
@@ -13,6 +13,11 @@ angular.module('oplanTimetable', ['ui.calendar'])
         timeFormat: 'H:mm',
         snapDuration: '0:05',
         defaultView: 'agendaWeek',
+        selectable: true,
+        selectHelper: true,
+        select: onSelectTimerange,
+        eventDrop: onEventChange,
+        eventResize: onEventChange,
         header:{
           left: 'agendaWeek agendaDay',
           center: 'title',
@@ -22,10 +27,41 @@ angular.module('oplanTimetable', ['ui.calendar'])
         eventClick: onEventClick
     };
     
+    angular.element($window).on('resize', function() {
+        $scope.calendar.height = $($window).height() - 80;
+        $scope.$apply();
+    })
+
     function onRenderView(view, element) {
         $location.search("w", view.start.isoWeek()).replace();
     }
     
+    function onSelectTimerange(start, end) {
+        var desc = prompt("Raumbedarf von "+start.format("HH:mm")+" bis "+end.format("HH:mm")+" eintragen?\n\nKommentar:");
+        if (desc === null) return;
+        
+        oplanHttp.newSlot(start, end, desc, $scope.gruppe)
+        .success(function() {
+            uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
+            uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
+        })
+        .error(function(data) {
+            alert("Allgemeiner Fehler");
+        });
+    }
+    
+    function onEventChange(event, delta, revertFunc, jsEvent, ui, view ) {
+        oplanHttp.moveSlot(event.id, event.start, event.end, true)
+        .success(function(data) {
+            uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
+            uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
+            messageBar.show('success', ''+data.modifications+' Einträge verschoben', 1500);
+        })
+        .error(function(data) {
+            revertFunc();
+        });
+    }
+
     function onEventClick(event, jsEvent, view) {
         $scope.slotId = event.id;
     }
@@ -41,8 +77,9 @@ angular.module('oplanTimetable', ['ui.calendar'])
         callback(result.map(function(x) {
           x.start = new Date(x.von);
           x.end = new Date(x.bis);
-          x.title = x.kommentar + ' (' + x.anz + ')';
           if (x.typ == 'ok') x.color = 'green';
+          if (x.min_platz < 1) { x.title = x.kommentar; x.color = '#808080'; }
+          else x.title = x.kommentar + ' (' + x.anz + ')';
           return x;
         }));
       });
@@ -51,15 +88,14 @@ angular.module('oplanTimetable', ['ui.calendar'])
     $scope.eventSources = [ eventLoader ];
     
     if ($routeParams.w) {
-      var d = moment($routeParams.w, "ww").add(1,'d');
-      console.log(d);
+      var d = moment().date(1).month(1).isoWeek($routeParams.w-1).day("Monday");
       $scope.calendar.defaultDate = d;
     }
     
   }])
   
-.controller('OplanRoomCtrl', ['$scope', '$routeParams', 'oplanHttp', 'uiCalendarConfig', '$location',
-  function($scope, $routeParams, oplanHttp, uiCalendarConfig, $location) {
+.controller('OplanRoomCtrl', ['$scope', '$routeParams', 'oplanHttp', 'uiCalendarConfig', '$location', 'messageBar',
+  function($scope, $routeParams, oplanHttp, uiCalendarConfig, $location, messageBar) {
     $scope.room = $routeParams.raum;
     /* config object */
     $scope.calendar = {
@@ -101,24 +137,26 @@ angular.module('oplanTimetable', ['ui.calendar'])
             uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
         })
         .error(function(data) {
-            alert("Allgemeiner Fehler");
+            uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
         });
     }
     
     function onEventChange(event, delta, revertFunc, jsEvent, ui, view ) {
       if (event.typ == "frei") {
-        var desc = prompt("Raum-Frei-Eintragung ändern? Raum: "+$scope.room+" von "+event.start.format("HH:mm")+" bis "+event.end.format("HH:mm")+"\n\nKommentar:", event.title);
-        if (desc === null) return;
-        
-        oplanHttp.setRaumFrei(event.id, $scope.room, event.start, event.end, desc, "???")
-        .success(function() {
-            uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
-            uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
-        })
-        .error(function(data) {
-            revertFunc();
-            alert("Allgemeiner Fehler");
-        });
+        setTimeout(function() {
+            var desc = prompt("Raum-Frei-Eintragung ändern? Raum: "+$scope.room+" von "+event.start.format("HH:mm")+" bis "+event.end.format("HH:mm")+"\n\nKommentar:", event.title);
+            if (desc === null) { revertFunc(); return; }
+            
+            oplanHttp.setRaumFrei(event.id, $scope.room, event.start, event.end, desc, "???")
+            .success(function() {
+                uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
+                uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
+
+            })
+            .error(function(data) {
+                revertFunc();
+            });
+        },1);
       } else {
         revertFunc();
       }
@@ -150,8 +188,7 @@ angular.module('oplanTimetable', ['ui.calendar'])
     $scope.eventSources = [ eventLoader ];
     
     if ($routeParams.w) {
-      var d = moment().isoWeek($routeParams.w-1).day("Tuesday");
-      console.log(d);
+      var d = moment().date(1).month(1).isoWeek($routeParams.w-1).day("Monday");
       $scope.calendar.defaultDate = d;
     }
     
