@@ -3,13 +3,13 @@ var module = angular.module("oplanSlot", ["angularGrid"]);
 module.config(function($locationProvider) {
     //$locationProvider.html5Mode(true);
 });
-module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routeParams, messageBar) {
+module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routeParams, messageBar, $q) {
     if (!$scope.slotId && $routeParams.id) {
         $scope.slotId = $routeParams.id;
     }
     if (!$scope.slotId) { $scope.error = "Bitte Parameter id angeben"; return; }
     var columnDefs = [
-        {headerName: "Kommentar", field: "kommentar", editable: true, width: 240, cellValueChanged: onEdit},
+        {headerName: "Kommentar", field: "kommentar", editable: true, width: 240, cellValueChanged: onEdit, checkboxSelection: true},
         {headerName: "Min. Plätze", field: "min_platz", editable: true, width: 90, cellValueChanged: onEdit},
         {headerName: "Zielgruppe", field: "zielgruppe", editable: true, width: 90, cellValueChanged: onEdit},
         {headerName: "Raumnr. Präferenz", field: "praeferenz", editable: true, width: 140, cellValueChanged: onEdit},
@@ -23,7 +23,9 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         columnDefs: columnDefs,
         rowData: [],
         dontUseScrolls: true, // because so little data, no need to use scroll bars,
-        angularCompileRows: true
+        angularCompileRows: true,
+        rowSelection: 'multiple',
+        suppressRowClickSelection: true
     };
     function loadLines() {
         oplanHttp.doGet("slot", { "id" : $scope.slotId }).success(function(result) {
@@ -98,7 +100,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             var edit = document.createElement("div");
             edit.className = "raumsel";
             edit.style.position="absolute";
-            var elHeight = (frei.length+1)*35;
+            var elHeight = (frei.length+2)*35;
             var height = Math.min(elHeight, window.innerHeight - offset.top - 30);
             if (height < Math.min(elHeight,200)) {
               height = Math.min(elHeight,200); offset.top = window.innerHeight - height - 30;
@@ -155,6 +157,55 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
 
         }
         return html;
+    }
+    
+    
+    $scope.toggleSelection = function() {
+        var xx=$scope.gridOptions.api;
+        xx.forEachInMemory(function(node) {
+          if (xx.isNodeSelected(node)) xx.deselectNode(node);
+          else xx.selectNode(node, true);
+        });
+    }
+    
+    $scope.gridOptions.selectionChanged = function() {
+        $scope.multiselect.show = ($scope.gridOptions.selectedRows.length > 0);
+    }
+    
+    $scope.multiselect = {
+        show: false,
+        action: "",
+        value: ""
+    };
+    $scope.runMultiselectAction = function() {
+        var promises = [];
+        var xx=$scope.gridOptions.api;
+        xx.forEachInMemory(function(node) {
+          if (xx.isNodeSelected(node)) {
+            console.log("selected: "+node.data.id+" "+node.data.kommentar+" --- doing action "+$scope.multiselect.action+"=", $scope.multiselect.value);
+            switch($scope.multiselect.action) {
+            case "delete":
+              promises.push( oplanHttp.doPost("slot.php?id=" + node.data.id, { delete: true }) );
+              break;
+            case "set_zielgruppe":
+              node.data.zielgruppe = $scope.multiselect.value;
+              promises.push( oplanHttp.updateSlot(node.data.id, node.data) );
+              break;
+            case "set_min_platz":
+              node.data.min_platz = $scope.multiselect.value;
+              promises.push( oplanHttp.updateSlot(node.data.id, node.data) );
+              break;
+            }
+          }
+        });
+        $q.all(promises).then(function(ok) {
+          console.log(ok);
+          loadLines(); messageBar.show("success", ""+ok.length+" Aktionen durchgeführt", 2500);
+        }, function(err) {
+          console.log(err);
+          loadLines();// messageBar.show("error", "Fehler: "+err, 2500);
+        });
+      
     }
 
 });

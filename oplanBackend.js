@@ -43,6 +43,10 @@ angular.module("oplanBackend", [])
             });
         },
         
+        deleteRaumFrei : function(id) {
+          return this.doPost("raum.php", {"delete": "yes", "id": id});
+        },
+        
         setRaumFrei: function(id, nummer, von, bis, kom, status) {
             if (!von.format) von=moment(von);
             if (!bis.format) bis=moment(bis);
@@ -52,6 +56,10 @@ angular.module("oplanBackend", [])
             };
             if (id) data.id = id;
             return this.doPost("raum.php", data);
+        },
+        
+        listStundenplans: function() {
+            return this.doGet("stundenplan", { "do" : "list" });
         }
       
     };

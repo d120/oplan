@@ -1,3 +1,4 @@
+<!doctype html>
 <html ng-app="oplanApp">
 <head>
   <meta charset="utf-8">
@@ -25,11 +26,16 @@
   <script src="httpIndicator.js"></script>
 </head>
 <body>
-  <div id="menu">
-    <input type="text" placeholder="Gehe zu Raum..." ng-model="gotoRoomText" size="15" ng-keypress="gotoRoomKey($event)">&nbsp;
-    <a href="#/">Zurück zur Übersicht</a>
-  </div>
-  
+
+<div id="menu">
+
+  <a href="#/" class="menubtn">Home</a>
+  <div id="dropdownmenu" ng-include="'partials/menu.html'"></div>
+  <input type="text" placeholder="Gehe zu Raum..." ng-model="gotoRoomText" size="15" ng-keypress="gotoRoomKey($event)">
+  &nbsp;
+</div>
+
+
 <div ng-view></div>
 
 <script type="text/ng-template" id="partials/slot.html">
@@ -38,16 +44,31 @@
 {{error}}
 </div>
 <div ng-if="!error">
-<button style="float:right" ng-click="addRow()">Zeile hinzufügen</button>
 <h1>{{slot.von_dt|date:"EEE dd.MM. HH:mm"}} - {{slot.bis_dt|date:"HH:mm"}}</h1>
+
+<div class="toolbar">
+<button class="menubtn" ng-click="addRow()" style="float:right">Zeile hinzufügen</button>
+<a href="javascript:" ng-click="powertools=!powertools" style="float:right" class="menubtn">Tools</a>
+
+<a href="javascript:" ng-click="toggleSelection()" class="menubtn" title="Auswahl umkehren">+ / &mdash;</a>  
+
+<select ng-model="multiselect.action" ng-show="multiselect.show">
+<option value="">(Aktion für Auswahl)</option>
+<option value="delete">Zeilen löschen</option>
+<option value="set_zielgruppe">Zielgruppe zuweisen:</option>
+<option value="set_min_platz">Min. Plätze zuweisen:</option>
+</select>
+<input type="text" ng-model="multiselect.value" ng-show="multiselect.show">
+<button ng-click="runMultiselectAction()" class="menubtn" ng-show="multiselect.show">go</button>
+</div>
+
+
+<div ng-show="powertools" class="toolbar" style="background: #faf">PowerTools --  copy paste:  <input type="button" ng-click="copyPasteApply()" value="apply!"><br>
+<textarea ng-model="$parent.$parent.copyPaste" style="width:100%"></textarea>
+</div>
+
 <div ag-grid="gridOptions" class="ag-fresh" style="height: 100%;"></div>
 
-<br>
-<a href="javascript:" ng-click="powertools=!powertools">
-Power tools...</a><br><!---->
-<div ng-show="powertools">copyPaste:  <input type="button" ng-click="copyPasteApply()" value="apply!"><br>
-<textarea ng-model="$parent.$parent.copyPaste" style="width:100%"></textarea>
-</div><br><br>
 </div>
 
 </script>
@@ -81,19 +102,45 @@ Power tools...</a><br><!---->
 </table>
 
 </script>
+
+
+<script type="text/ng-template" id="partials/kleingruppen.html">
+<h1>Kleingruppenliste</h1>
+<table class="tucan">
+<thead>
+<tr><th>Kleingruppe</th><th>Montag</th><th>Dienstag</th><th>Mittwoch</th><th>Donnerstag</th><th>Freitag</th></tr>
+</thead>
+<tr ng-repeat="row in data">
+<td ng-repeat="col in row track by $index" ng-class="{ warn: col=='!!!' ? 'red' : '' }">{{col}}</td>
+</tr>
+</table>
+
+</script>
+
+
+
 <script type="text/ng-template" id="partials/timetable.html">
 <div ng-if="slotId" class="slotDetails">
 <button ng-click="closeDetails()" style="float:right;margin: 18px 0 0 10px;">Schließen</button>
 <div ng-controller="OplanSlotCtrl" ng-include="'partials/slot.html'"></div>
 </div>
 
-<h1>Stundenplan {{gruppe}}</h1>
+<h1 style="float:left; margin:0 20px 0 0;">Stundenplan {{gruppe}}</h1>
+<div style="float: left">
+  <a href="stundenplan.php?w={{woche}}&g={{gruppe}}" class="menubtn">Druckansicht</a>
+  <a href="stundenplan.php?w={{woche}}&g={{gruppe}}&format=ics" class="menubtn">Export als ICS</a>
+</div>
+<hr style="clear:both">
+
+
 <div ui-calendar="calendar" ng-model="eventSources" calendar="timetable">
 
 </script>
-<script type="text/ng-template" id="partials/room.html">
 
-<h1 style="float:left; margin:0 20px 0 0;">Raumplan {{room}}  </h1>
+
+
+<script type="text/ng-template" id="partials/room.html">
+<h1 style="float:left; margin:0 20px 0 0;">Raum {{room}}  </h1>
 <div style="float:left">
 Snap: <select ng-model="calendar.snapDuration"><option>0:05</option><option>0:10</option><option>0:15</option><option>0:30</option></select>
 <button ng-click="updateAusVerw()">Buchungszeiten laden</button>
@@ -113,26 +160,38 @@ Kommentar: {{raumInfo.verw_kommentar}}
 
 </div>
 <hr style="clear:both">
-<div ui-calendar="calendar" ng-model="eventSources" calendar="timetable">
 
+<div id="sidebar">
+  <a ng-href="#/raumplan/{{raum.nummer}}?w={{defaultWeek}}" ng-repeat="raum in raumliste" ng-class="{current:room==raum.nummer}">
+  {{raum.nummer}} <small>({{raum.platz}})</small></a>
+</div>
+<div id="contentArea">
+  <div ui-calendar="calendar" ng-model="eventSources" calendar="timetable">
+</div>
+</script>
+
+<script type="text/ng-template" id="partials/menu.html">
+<ul>
+<li><b>Stundenpläne</b><ul>
+  <li ng-repeat="(id,text) in stundenplanlist"><a ng-href="#/stundenplan/{{ id }}?w={{defaultWeek}}">{{ text }}</a></li>
+</ul></li>
+
+<li><b>Raumlisten</b><ul>
+  <li><a href="#/raumliste">Alle verfügbaren Räume</a></li>
+  <li><a href="#/raumliste/tucan">Druckansicht</a></li>
+  <li><a href="#/raumliste/kleingruppe">Kleingruppenräume</a></li>
+</ul></li>
+
+</ul>
 </script>
 
 <script type="text/ng-template" id="partials/home.html">
 <h1>Oplan</h1>
 
-<ul>
-<li>Stundenpläne:
-<a ng-href="#/stundenplan/bachelor?w=41">Bachelor</a>
-<a ng-href="#/stundenplan/master_de?w=41">Master DE</a>
-<a ng-href="#/stundenplan/master_en?w=41">Master  EN</a>
-<a ng-href="#/stundenplan/orga?w=41">Orga</a>
-</li>
-
-<li><a href="#/raumliste">Alle verfügbaren Räume</a> | <a href="#/raumliste/tucan">Druckansicht</a></li>
-</ul>
+<div ng-include="'partials/menu.html'" id="homepage_menu"></div>
 
 <form ng-show="!auth">
-<input type="text" ng-model="username"> <input type="password" ng-model="password"> 
+<input type="text" ng-model="username"> <input type="password" ng-model="password" id="login_pw"> 
 <button ng-click="login()">Login</button>
 </form>
 <div ng-show="auth">
@@ -140,6 +199,11 @@ Hallo {{username}}, du bist eingeloggt.
 <button ng-click="logout()">Logout</button>
 </div>
 
+</script>
+
+<script type="text/ng-template" id="partials/404.html">
+<br>
+<h1>404</h1>
 </script>
 
 </body>

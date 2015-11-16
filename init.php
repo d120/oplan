@@ -6,13 +6,6 @@ $db = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8", $DB_USER, $DB_
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-function getdata($params) {
-    global $API_KEY;
-    $url = "https://creativecommons.tankerkoenig.de/json/";
-    $result = file_get_contents($url.$params."&apikey=$API_KEY");
-    $json = json_decode($result, true);
-    return $json;
-}
 
 function fail($code, $message, $details = null) {
     switch($code) {

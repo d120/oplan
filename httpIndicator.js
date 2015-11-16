@@ -17,20 +17,30 @@ angular.module('httpIndicator', [])
 .config(['$httpProvider', '$provide', function ($httpProvider, $provide) {
   $provide.factory('httpIndicatorProvider', function($q, $injector, messageBar, $rootScope) {
     var $http;
-    return {
+		var loading = $("<div class='progressBar'></div>").prependTo("body");
+		var timeout;
+    var self = {
       // on request start
-      'request': function(config) {
-        messageBar.show('loading', 'Eile mit Weile...');
+			'request': function(config) {
+        loading.show();
         config.headers.Authorization = 'Basic '+$rootScope.auth;
         return config;
       },
 
+			hideLoader: function() {
+			  if(timeout)clearTimeout(timeout);
+			  timeout = setTimeout(function() {
+            if($http.pendingRequests.length < 1) {
+                loading.hide();
+            }
+						timeout=null;
+				}, 200);
+			},
+			
       // on success
       'response': function(response) {
         $http = $http || $injector.get('$http');
-        if($http.pendingRequests.length < 1) {
-            messageBar.hide('loading');
-        }
+				self.hideLoader();
         console.log("response:",response);
         return response;
       },
@@ -39,9 +49,7 @@ angular.module('httpIndicator', [])
       'responseError': function(rejection) {
         $http = $http || $injector.get('$http');
         console.log("HTTP Error: ",rejection);
-        if($http.pendingRequests.length < 1) {
-            messageBar.hide('loading');
-        }
+        self.hideLoader();
 
         if (rejection.data) {
             messageBar.show("error", "Fehler: " + rejection.data.error, 3000);
@@ -53,6 +61,7 @@ angular.module('httpIndicator', [])
         return $q.reject(rejection);
       }
     };
+		return self;
   });
 
   $httpProvider.interceptors.push('httpIndicatorProvider');

@@ -98,5 +98,10 @@ $freiResult = $db->query("SELECT f.raum_nummer,f.von,f.bis,f.status,f.kommentar,
     order by if(belegt is null,0,1) asc,raum_nummer");
 if(!$freiResult) fail(500, "sql_failed", $db->errorInfo()[2]);
 
-echo json_encode(array("slot"=>$slot, "raumbedarf"=>$res->fetchAll(PDO::FETCH_ASSOC), "frei"=>$freiResult->fetchAll(PDO::FETCH_ASSOC)));
+$termin = $db->query("SELECT * FROM termin WHERE von='$slot[von]' and bis='$slot[bis]'");
+if (!$termin) fail(500, "sql_failed", $db->errorInfo()[2]);
+$termin = $termin->fetch(PDO::FETCH_ASSOC);
+if (!$termin) $termin = array();
+
+echo json_encode(array("slot"=>$slot, "raumbedarf"=>$res->fetchAll(PDO::FETCH_ASSOC), "frei"=>$freiResult->fetchAll(PDO::FETCH_ASSOC), "termin" => $termin));
 ?>

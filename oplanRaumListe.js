@@ -29,6 +29,8 @@ module.controller("OplanRaumListeCtrl", function($scope, $http, $location, $filt
         enableColResize: true
     };
     
+    $("div[ag-grid]").css("height", window.innerHeight-80+"px")
+    
     $http.get("raum.php").success(function(result) {
         for(var k in result.frei) {
             if (!result.frei[k].belegt) result.frei[k].belegt = "(frei)";
@@ -64,6 +66,30 @@ module.controller("OplanRaumListeCtrl", function($scope, $http, $location, $filt
         });
     }
 });
+
+
+module.controller("OplanKleingruppenlisteCtrl", function($scope, $http) {
+    
+    $http.get("raum.php?kleingruppen=bachelor").success(function(result) {
+        var data = [];
+        result.forEach(function(row) {
+            var raum = row.raeume.split(/,/);
+						var tage = {Montag:"-",Dienstag:"-",Mittwoch:"-",Donnerstag:"-",Freitag:"-"};
+            console.log(row, raum);
+            //if (raum.length<9) return;
+            for(var i = 1; i <= 9; i += 2) {
+								if (raum[i] === "") raum[i] = "!!!";
+								if (raum[i] === undefined) raum[i] = "-";
+								var t = raum[i-1];
+								if (raum[i].length > 4) raum[i] = raum[i].substr(0,2) + "|" + raum[i].substr(2);
+								tage[t] = ((tage[t]!='-')?(tage[t]+","):"") + raum[i];
+            }
+            data.push([ row.kommentar, tage.Montag, tage.Dienstag, tage.Mittwoch, tage.Donnerstag, tage.Freitag ]);
+        });
+        $scope.data = data;
+    });
+});
+
 module.controller("OplanTucanRaumListeCtrl", function($scope, $http) {
     
     $http.get("raum.php?order=tucan").success(function(result) {

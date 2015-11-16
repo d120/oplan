@@ -6,9 +6,12 @@ header("Content-Type: application/json");
 
 if (count($_POST)>0) {
   auth_required();
-  if (isset($_POST["id"])) {
-      $db->prepare("UPDATE raumfrei SET raum_nummer=?,von=?,bis=?,kommentar=?,status=? WHERE id=?")
-        ->execute(array($_POST["raum_nummer"], $_POST["von"], $_POST["bis"], $_POST["kommentar"], $_POST["status"], $_POST["id"]));
+  if (isset($_POST["id"]) && isset($_POST["delete"])) {
+    $db->prepare("DELETE FROM raumfrei  WHERE id=?")
+    ->execute(array($_POST["id"]));
+  } else if (isset($_POST["id"])) {
+    $db->prepare("UPDATE raumfrei SET raum_nummer=?,von=?,bis=?,kommentar=?,status=? WHERE id=?")
+      ->execute(array($_POST["raum_nummer"], $_POST["von"], $_POST["bis"], $_POST["kommentar"], $_POST["status"], $_POST["id"]));
   } else {
     $db->prepare("INSERT INTO raumfrei SET raum_nummer=?,von=?,bis=?,kommentar=?,status=? ")
       ->execute(array($_POST["raum_nummer"], $_POST["von"], $_POST["bis"], $_POST["kommentar"], $_POST["status"]));
@@ -16,11 +19,25 @@ if (count($_POST)>0) {
   return;
 }
 
+if (isset($_GET["kleingruppen"])) {
+    $sql = 'select kommentar,group_concat(concat(date_format(von,"%W"),",",raum) order by von) raeume from raumbedarf
+         where   kommentar like "%Gruppe%" or  kommentar like "%Group%"
+         group by kommentar order by kommentar ;  ';
+    $res = $db->query($sql);
+    echo json_encode($res->fetchAll());
+    exit;
+}
+
 if (isset($_GET["nummer"])) {
     $q = $db->prepare("SELECT * FROM raum WHERE nummer = ?");
     $q->execute(array($_GET["nummer"]));
     echo json_encode(array("info" => $q->fetch()));
     exit;
+}
+
+if (isset($_GET["all"])) {
+    echo json_encode(array( "raumliste"=>$db->query("SELECT * FROM raum;")->fetchAll(PDO::FETCH_ASSOC)));
+    return;
 }
 
 $order = "date(f.von) asc,f.raum_nummer asc";

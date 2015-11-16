@@ -19,6 +19,11 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
         templateUrl: 'partials/raumlistetucan.html',
         controller: 'OplanTucanRaumListeCtrl'
       }).
+      when('/raumliste/kleingruppe', {
+        title: 'Kleingruppenliste',
+        templateUrl: 'partials/kleingruppen.html',
+        controller: 'OplanKleingruppenlisteCtrl'
+      }).
       when('/slot/:id', {
         title: 'Slot',
         templateUrl: 'partials/slot.html',
@@ -37,37 +42,54 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
         reloadOnSearch: false
       }).
       otherwise({
+        title: '404',
+        templateUrl: 'partials/404.html'
         //redirectTo: '/login'
       });
   }])
 
-.run(['$location', '$rootScope', 
-  function($location, $rootScope) {
+.run(['$location', '$rootScope', 'oplanHttp',
+  function($location, $rootScope, oplanHttp) {
     $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
-        $rootScope.title = current.$$route.title;
+        if (current.$$route) $rootScope.title = current.$$route.title;
     });
     
     $rootScope.gotoRoomKey = function(e) {
         if (e.keyCode == 13) {
-            $location.path("/raumplan/" + e.target.value).search("w", 41);
+            $location.path("/raumplan/" + e.target.value).search("w", $rootScope.defaultWeek);
         }
     }
 
     if (localStorage.auth) {
       $rootScope.auth = localStorage.auth;
     }
+
+    oplanHttp.listStundenplans().success(function(ok) {
+      $rootScope.stundenplanlist = ok;      
+    })
+    
+    $rootScope.defaultWeek = "2016_19";
   }])
   
-.controller('OplanHomeCtrl', function($scope, $rootScope) {
+.controller('OplanHomeCtrl', function($scope, $rootScope, oplanHttp) {
     $scope.username = $rootScope.auth ? atob($rootScope.auth).split(/:/)[0] : '';
     $scope.login = function() {
       $rootScope.auth = btoa($scope.username + ":" + $scope.password);
-      localStorage.auth = $rootScope.auth;
+      oplanHttp.doGet("login", {}).then(function(ok) {
+        localStorage.auth = $rootScope.auth;
+      }, function(err) {
+        $rootScope.auth = null;
+        setTimeout(function() {
+          $("#login_pw").focus().select();
+        },1)
+      });
+      
     }
     $scope.logout = function() {
       $rootScope.auth = null;
       localStorage.auth = "";
     }
+    
   })
 
 .directive('ngRightClick', function($parse) {
@@ -82,4 +104,25 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
     };
 })
 
+
+
+.factory('mwContextMenu', function($http) {
+    return function(event, menuItems) {console.log(event)
+        var menu = $("<div class='raumsel'></div>");
+        menu.css({ top: event.pageY + "px", left: event.pageX + "px" });
+        for(var k in menuItems) {
+            var item = $("<div>"+k+"</div>").appendTo(menu);
+            item.click(menuItems[k]);
+        }
+        $(document.body).append(menu);
+        setTimeout(function() {
+          $(document).one("click", function(e) {
+            menu.remove(); e.preventDefault();
+          })
+          $(document).one("contextmenu", function(e) {
+            menu.remove(); e.preventDefault();
+          })
+        },1)
+    }
+});
 ;
