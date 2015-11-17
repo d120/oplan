@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace Oplan\Events;
 
 abstract class Event
 {

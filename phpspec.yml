@@ -1,5 +1,5 @@
 suites:
     main:
-        namespace: App
-        psr4_prefix: App
+        namespace: Oplan
+        psr4_prefix: Oplan
         src_path: app

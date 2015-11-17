@@ -38,10 +38,10 @@ angular.module('oplanTimetable', ['ui.calendar'])
     }
     
     function onSelectTimerange(start, end) {
-        var desc = prompt("Raumbedarf von "+start.format("HH:mm")+" bis "+end.format("HH:mm")+" eintragen?\n\nKommentar:");
+        var desc = prompt("Termin von "+start.format("HH:mm")+" bis "+end.format("HH:mm")+" eintragen?\n\nKurztitel:");
         if (desc === null) return;
         
-        oplanHttp.newSlot(start, end, desc, $scope.gruppe)
+        oplanHttp.newTermin(start, end, desc, $scope.gruppe)
         .success(function() {
             uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
             uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
@@ -52,7 +52,7 @@ angular.module('oplanTimetable', ['ui.calendar'])
     }
     
     function onEventChange(event, delta, revertFunc, jsEvent, ui, view ) {
-        oplanHttp.moveSlot(event.id, event.start, event.end, true)
+        oplanHttp.moveTermin(event.id, event.start, event.end, true)
         .success(function(data) {
             uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
             uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
@@ -76,11 +76,11 @@ angular.module('oplanTimetable', ['ui.calendar'])
       .success(function(result) {
         
         callback(result.map(function(x) {
-          x.start = new Date(x.von);
-          x.end = new Date(x.bis);
+          x.start = new Date(x.von.replace(/ /,'T'));
+          x.end = new Date(x.bis.replace(/ /,'T'));
           if (x.typ == 'ok') x.color = 'green';
-          if (x.min_platz < 1) { x.title = x.kommentar; x.color = '#808080'; }
-          else x.title = x.kommentar + ' (' + x.anz + ')';
+          if (x.min_platz < 1) { x.title = x.kurztitel; x.color = '#808080'; }
+          else x.title = x.kurztitel + ' (' + x.anz + ')';
           return x;
         }));
       });
@@ -127,7 +127,7 @@ angular.module('oplanTimetable', ['ui.calendar'])
     };
     
     function onRenderView(view, element) {
-        $location.search("w", view.start.isoWeek()).replace();
+        $location.search("w", view.start.format("YYYY_ww")).replace();
         $scope.calStart = view.start.toDate();
     }
     

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions;
+namespace Oplan\Exceptions;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -45,7 +45,15 @@ class Handler extends ExceptionHandler
         if ($e instanceof ModelNotFoundException) {
             $e = new NotFoundHttpException($e->getMessage(), $e);
         }
+        
+        if ($request->ajax() || $request->wantsJson()) {
 
+            $message = $e->getMessage();
+            if (is_object($message)) { $message = $message->toArray(); }
+
+            return new JsonResponse($message, 422);
+        }
+        
         return parent::render($request, $e);
     }
 }

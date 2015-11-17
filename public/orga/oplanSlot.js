@@ -9,11 +9,10 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
     }
     if (!$scope.slotId) { $scope.error = "Bitte Parameter id angeben"; return; }
     var columnDefs = [
-        {headerName: "Kommentar", field: "kommentar", editable: true, width: 240, cellValueChanged: onEdit, checkboxSelection: true},
-        {headerName: "Min. Plätze", field: "min_platz", editable: true, width: 90, cellValueChanged: onEdit},
-        {headerName: "Zielgruppe", field: "zielgruppe", editable: true, width: 90, cellValueChanged: onEdit},
-        {headerName: "Raumnr. Präferenz", field: "praeferenz", editable: true, width: 140, cellValueChanged: onEdit},
-        {headerName: "Raumnr. zugeteilt", field: "raum", cellRenderer: raumAuswahl, width: 140  }
+        {headerName: "Kommentar", field: "kommentar", editable: true, width: 255, cellValueChanged: onEdit, checkboxSelection: true},
+        {headerName: "Min.Plätze", field: "min_platz", editable: true, width: 75, cellValueChanged: onEdit},
+        {headerName: "Raumnr. Präferenz", field: "praeferenz", editable: true, width: 130, cellValueChanged: onEdit},
+        {headerName: "Raumnr. zugeteilt", field: "raum", cellRenderer: raumAuswahl, width: 130  }
     ];
 
     var frei = [];
@@ -22,17 +21,17 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
     $scope.gridOptions = {
         columnDefs: columnDefs,
         rowData: [],
-        dontUseScrolls: true, // because so little data, no need to use scroll bars,
+        //dontUseScrolls: true, // because so little data, no need to use scroll bars,
         angularCompileRows: true,
         rowSelection: 'multiple',
         suppressRowClickSelection: true
     };
     function loadLines() {
-        oplanHttp.doGet("slot", { "id" : $scope.slotId }).success(function(result) {
+        oplanHttp.doGet("ak/" + $scope.slotId).success(function(result) {
             $scope.gridOptions.rowData = result.raumbedarf;
-            $scope.slot = result.slot;
-            $scope.slot.von_dt = new Date($scope.slot.von);
-            $scope.slot.bis_dt = new Date($scope.slot.bis);
+            $scope.ak = result.ak;
+            $scope.ak.von_dt = new Date($scope.ak.von);
+            $scope.ak.bis_dt = new Date($scope.ak.bis);
             frei = result.frei;
             $scope.gridOptions.api.onNewRows();
         });
@@ -69,7 +68,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         var last = rows[rows.length - 1];
         var komm = last.kommentar;
         komm = komm.substr(0, komm.length-1) + String.fromCharCode(komm.charCodeAt(komm.length-1)+1);
-        oplanHttp.newSlot($scope.slot.von, $scope.slot.bis, komm, last.zielgruppe)
+        oplanHttp.createBelegung($scope.ak.von, $scope.ak.bis, komm, last.zielgruppe)
         .success(function(data) {
             rows.push({
                 id: data.id, kommentar: komm, min_platz: last.min_platz, praeferenz: "", raum: "", zielgruppe: last.zielgruppe
@@ -80,12 +79,12 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
     }
     
     function onEdit(params) {
-        oplanHttp.updateSlot(params.data.id, params.data);
+        oplanHttp.updateBelegung(params.data.id, params.data);
     }
     
     function raumDetails(raum) {
-        var week = moment($scope.slot.von_dt).isoWeek();
-        window.open("#/raumplan/" + raum+"?w="+week,"","width=850,height=730");
+        var week = moment($scope.ak.von_dt).isoWeek();
+        window.open("#/"+$rootScope.vk+"/raumplan/" + raum+"?w="+week,"","width=850,height=730");
     }
 
     function raumAuswahl(params) {
@@ -112,7 +111,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             setTimeout(function() {
                 $(document.body).one("click", function(e) {
                     if (e.target.getAttribute("data-delete") !== null) {
-                        oplanHttp.doPost("slot.php?id=" + params.data.id, { delete: true })
+                        oplanHttp.doDELETE("belegung/" + params.data.id, { delete: true })
                         .success(function() {
                             loadLines(); messageBar.show("success", "Zeile wurde gelöscht.", 2500);
                         });
@@ -185,15 +184,15 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             console.log("selected: "+node.data.id+" "+node.data.kommentar+" --- doing action "+$scope.multiselect.action+"=", $scope.multiselect.value);
             switch($scope.multiselect.action) {
             case "delete":
-              promises.push( oplanHttp.doPost("slot.php?id=" + node.data.id, { delete: true }) );
+              promises.push( oplanHttp.doDELETE("belegung/" + node.data.id, { delete: true }) );
               break;
             case "set_zielgruppe":
               node.data.zielgruppe = $scope.multiselect.value;
-              promises.push( oplanHttp.updateSlot(node.data.id, node.data) );
+              promises.push( oplanHttp.updateBelegung(node.data.id, node.data) );
               break;
             case "set_min_platz":
               node.data.min_platz = $scope.multiselect.value;
-              promises.push( oplanHttp.updateSlot(node.data.id, node.data) );
+              promises.push( oplanHttp.updateBelegung(node.data.id, node.data) );
               break;
             }
           }
@@ -207,5 +206,24 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         });
       
     }
+    
+    $("#belegunggrid").css('height',window.innerHeight - 200 + 'px');
+    
 
+})
+
+
+module.directive('sizewithwindow', function ($window) {
+    return function (scope, element) {
+        var w = angular.element($window);
+        var onResize = function () {
+            scope.windowHeight = window.innerHeight;
+            scope.windowWidth = window.innerWidth;
+        };
+        onResize();
+        w.bind('resize', onResize);
+        scope.$on('$destroy', function() {
+            w.unbild('resize', onResize);
+        });
+    }
 });

@@ -70,7 +70,7 @@ module.controller("OplanRaumListeCtrl", function($scope, $http, $location, $filt
 
 module.controller("OplanKleingruppenlisteCtrl", function($scope, $http) {
     
-    $http.get("raum.php?kleingruppen=bachelor").success(function(result) {
+    $http.get("/api/v1/special/kleingruppen/bachelor").success(function(result) {
         var data = [];
         result.forEach(function(row) {
             var raum = row.raeume.split(/,/);
@@ -92,7 +92,7 @@ module.controller("OplanKleingruppenlisteCtrl", function($scope, $http) {
 
 module.controller("OplanTucanRaumListeCtrl", function($scope, $http) {
     
-    $http.get("raum.php?order=tucan").success(function(result) {
+    $http.get("/api/v1/special/raum_tucan").success(function(result) {
         var data = {};
         result.frei.forEach(function(row) {
             var key = row.von_day + " " + row.von_time + " " + row.bis_time;

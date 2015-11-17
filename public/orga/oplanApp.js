@@ -5,37 +5,46 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
   function($routeProvider) {
     $routeProvider.
       when('/', {
+        templateUrl: 'partials/eile.html',
+        controller: 'OplanIndexRedirectCtrl'
+      }).
+      when('/select_event', {
+        title: 'Oplan',
+        templateUrl: 'partials/select_veranstaltung.html',
+        controller: 'OplanSelectEventCtrl'
+      }).
+      when('/:vk/home', {
         title: 'Oplan',
         templateUrl: 'partials/home.html',
         controller: 'OplanHomeCtrl'
       }).
-      when('/raumliste', {
+      when('/:vk/raumliste', {
         title: 'Raumliste',
         templateUrl: 'partials/raumliste.html',
         controller: 'OplanRaumListeCtrl'
       }).
-      when('/raumliste/tucan', {
+      when('/:vk/raumliste/tucan', {
         title: 'Raumliste TUCaN-Style',
         templateUrl: 'partials/raumlistetucan.html',
         controller: 'OplanTucanRaumListeCtrl'
       }).
-      when('/raumliste/kleingruppe', {
+      when('/:vk/raumliste/kleingruppe', {
         title: 'Kleingruppenliste',
         templateUrl: 'partials/kleingruppen.html',
         controller: 'OplanKleingruppenlisteCtrl'
       }).
-      when('/slot/:id', {
+      when('/:vk/slot/:id', {
         title: 'Slot',
         templateUrl: 'partials/slot.html',
         controller: 'OplanSlotCtrl'
       }).
-      when('/stundenplan/:gruppe', {
+      when('/:vk/stundenplan/:gruppe', {
         title: 'Stundenplan',
         templateUrl: 'partials/timetable.html',
         controller: 'OplanTimetableCtrl',
         reloadOnSearch: false
       }).
-      when('/raumplan/:raum', {
+      when('/:vk/raumplan/:raum', {
         title: 'Raumplan',
         templateUrl: 'partials/room.html',
         controller: 'OplanRoomCtrl',
@@ -48,25 +57,38 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
       });
   }])
 
-.run(['$location', '$rootScope', 'oplanHttp',
-  function($location, $rootScope, oplanHttp) {
+.run(['$location', '$rootScope', 'oplanHttp', '$routeParams',
+  function($location, $rootScope, oplanHttp, $routeParams) {
     $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
-        if (current.$$route) $rootScope.title = current.$$route.title;
+        if (current.$$route) {
+          $rootScope.title = current.$$route.title;
+          if ($routeParams.vk) $rootScope.vk = $routeParams.vk;
+        }
     });
     
     $rootScope.gotoRoomKey = function(e) {
         if (e.keyCode == 13) {
-            $location.path("/raumplan/" + e.target.value).search("w", $rootScope.defaultWeek);
+            $location.path("/" + $rootScope.vk + "/raumplan/" + e.target.value).search("w", $rootScope.defaultWeek);
         }
     }
 
     if (localStorage.auth) {
       $rootScope.auth = localStorage.auth;
     }
-
-    oplanHttp.listStundenplans().success(function(ok) {
-      $rootScope.stundenplanlist = ok;      
-    })
+    
+    oplanHttp.listVeranstaltungen().success(function(result) {
+        $rootScope.veranstaltunglist = {}
+        result.forEach(function(x) { $rootScope.veranstaltunglist[x.kuerzel] = x; });
+        
+        $rootScope.$watch('vk', function() {
+            if (!$rootScope.vk) return;
+            oplanHttp.listStundenplans().success(function(ok) {
+                $rootScope.stundenplanlist = ok;      
+            });
+            $rootScope.defaultWeek = moment($rootScope.veranstaltunglist[$rootScope.vk].start_date).format("YYYY_ww");
+        });
+        
+    });
     
     $rootScope.defaultWeek = "2016_19";
   }])
@@ -90,6 +112,17 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
       localStorage.auth = "";
     }
     
+  })
+  
+.controller('OplanSelectEventCtrl', function($scope, $rootScope, oplanHttp) {
+    
+  })
+
+.controller('OplanIndexRedirectCtrl', function($scope, $location, oplanHttp) {
+    oplanHttp.listVeranstaltungen().success(function(result) {
+        $location.path('/' + result[0].kuerzel + '/home');
+    });
+
   })
 
 .directive('ngRightClick', function($parse) {

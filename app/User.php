@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace Oplan;
 
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
@@ -28,12 +28,29 @@ class User extends Model implements AuthenticatableContract,
      *
      * @var array
      */
-    protected $fillable = ['name', 'email', 'password'];
+    protected $fillable = ['name', 'email', 'pwhash'];
 
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['pwhash'];
+
+    public function getAuthPassword() {
+        return $this->pwhash;
+    }
+
+    public function fieldValues() {
+        return $this->hasMany('Oplan\UserFieldValue');
+    }
+
+    /**
+     * Termine, für die dieser Benutzer als Veranstalter eingetragen ist
+     * z.B. von diesem Benutzer geleitete AKs
+    **/
+    public function geleiteteTermine() {
+       return $this->belongsToMany('Oplan\Termin', 'termin_leiter'); 
+    }
+    
 }

@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Providers;
+namespace Oplan\Providers;
 
 use Illuminate\Routing\Router;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+
+use Oplan\Veranstaltung;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -14,7 +16,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    protected $namespace = 'App\Http\Controllers';
+    protected $namespace = 'Oplan\Http\Controllers';
 
     /**
      * Define your route model bindings, pattern filters, etc.
@@ -27,6 +29,10 @@ class RouteServiceProvider extends ServiceProvider
         //
 
         parent::boot($router);
+        
+        $router->bind('veranstaltung', function($kuerzel) {
+            return Veranstaltung::byKey($kuerzel);
+        });
     }
 
     /**

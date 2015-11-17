@@ -3,6 +3,6 @@
 Homestead.yaml
 Homestead.json
 .env
-bower_components
+public/vendor
 *~
-.htconfig.php
+

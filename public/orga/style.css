@@ -26,9 +26,15 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 
 .slotDetails {
   position: absolute; top: 50px; right: 10%; background: white;
-  padding: 10px 20px; z-index: 10; max-height: 80%; overflow-y: auto; box-shadow: 1px 1px 20px #999; 
+  padding: 10px 20px; z-index: 10; box-shadow: 1px 1px 20px #999; 
 }
 .toolbar { padding: 7px; background: #f7f7f7; border : 1px solid #808080; border-bottom: 0; }
+
+.slotDetails .ak_title, .slotDetails .ak_title input{font:bold 16pt 'Courier New';}
+.slotDetails .form-field { margin: 5px 0; }
+.slotDetails .form-field label.b { width: 100px; display: inline-block; }
+.slotDetails .form-field em { padding: 0 10px; color: #666; }
+
 
 .tucan { border-collapse: collapse; }
 .tucan tr { border-top: 1px solid #ddd; }
@@ -75,6 +81,7 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 #homepage_menu b { display: block; padding: 10px; background: #ddd; }
 #homepage_menu ul ul { margin: 10px 0; }
 #homepage_menu::after { display: block; clear: left; content: ""; }
+
 
 
 
