@@ -3,6 +3,7 @@
 namespace Oplan\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 use Oplan\Http\Requests;
 use Oplan\Http\Controllers\Controller;
@@ -26,7 +27,19 @@ class AkListController extends Controller
         $aks = Termin::where('veranstaltung_id', $veranstaltung->id)->get();
         return view('ak.list', ['list' => $aks]);
     }
-
+    
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function xmlExport(Request $request, Veranstaltung $veranstaltung)
+    {
+        $doc = $veranstaltung->generatePentabarfXML();
+        $content = $doc->saveXML();
+        return (new Response($content, '200'))->header('Content-Type', 'text/xml');
+    }
+    
     /**
      * Show the form for creating a new resource.
      *

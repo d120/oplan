@@ -14,6 +14,7 @@
 Route::get('/', 'MiscController@index');
 
 
+Route::get('/{veranstaltung}.xml', 'AkListController@xmlExport');
 Route::get('/{veranstaltung}/aks', 'AkListController@index');
 Route::get('/{veranstaltung}/aks/{ak_slug}', 'AkListController@show');
 Route::get('/ak/{ak_id}', 'AkListController@showById');
@@ -30,6 +31,9 @@ Route::put('/api/v1/{ver_k}/ak/{id}', 'BackEndController@modifyAk');
 //(data)
 //von=&bis=&all=
 Route::post('/api/v1/{ver_k}/ak', 'BackEndController@createAk');
+Route::post('/api/v1/{ver_k}/ak/{id}/raumbedarf', 'BackEndController@createRaumbedarf');
+Route::put('/api/v1/{ver_k}/ak/{id}/raumbedarf/{b_id}', 'BackEndController@updateRaumbedarf');
+Route::delete('/api/v1/{ver_k}/ak/{id}/raumbedarf/{b_id}', 'BackEndController@deleteRaumbedarf');
 
 
 Route::delete('/api/v1/{ver_k}/raumbuchung/{id}', 'BackEndController@deleteRaumbuchung');
