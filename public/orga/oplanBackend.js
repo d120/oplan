@@ -23,18 +23,22 @@ angular.module("oplanBackend", [])
             return this.doPost(url, urlParams, data, "DELETE");
         },
         
-        belegeRaum: function(nummer, belegungId) {
+        belegeRaum: function(terminId, belegungId, nummer) {
             return this.doPUT("belegung/"+belegungId, {},
               {apply: nummer});
         },
         
-        updateBelegung: function(belegungId, data) {
-            return this.doPUT("belegung/"+belegungId,  {},
+        updateBelegung: function(terminId, belegungId, data) {
+            return this.doPUT("ak/"+terminId+"/raumbedarf/"+belegungId,  {},
               data);
         },
-        createBelegung: function(data) {
-            return this.doPOST("belegung",  {},
-              data);
+        createBelegung: function(terminId, komm, min_platz) {
+            return this.doPost("ak/"+terminId+"/raumbedarf",  {},
+              { ak_id: terminId, kommentar: komm, min_platz: min_platz });
+        },
+        deleteBelegung: function(terminId, belegungId) {
+            return this.doDELETE("ak/"+terminId+"/raumbedarf/"+belegungId,  {},
+              {});
         },
         
         moveTermin: function(terminId, start, end, moveAll) {

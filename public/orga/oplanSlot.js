@@ -37,41 +37,17 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
         });
     }
     $scope.$watch('slotId' , loadLines);
-    console.log($scope);
-    $scope.copyPaste = "";
-    $scope.$watch('gridOptions.rowData', function() {
-        var out=[];
-        for(var i=0; i<$scope.gridOptions.rowData.length; i++) out [i] = $scope.gridOptions.rowData[i].raum;
-        $scope.copyPaste = out.join(";");
-    });
-    
-    $scope.copyPasteApply = function() {
-        "use strict";
-        var it = $scope.copyPaste.split(/;/), rows = $scope.gridOptions.rowData;
-        console.log($scope.copyPaste,it);
-        if (it.length != rows.length) {alert("Item count mismatch");return;}
-        for(var i=0; i<rows.length; i++) {
-            (function(index) {
-                oplanHttp.belegeRaum(it[i], rows[i].id)
-                .success(function() {
-                    rows[index].raum = it[index];
-                })
-                .error(function() {
-                    rows[index].raum ="error";
-                });
-            })(i);
-        }
-    }
     
     $scope.addRow = function() {
         var rows = $scope.gridOptions.rowData;
         var last = rows[rows.length - 1];
+        if (!last) last = { min_platz: -1, kommentar: "Belegung 1" };
         var komm = last.kommentar;
         komm = komm.substr(0, komm.length-1) + String.fromCharCode(komm.charCodeAt(komm.length-1)+1);
-        oplanHttp.createBelegung($scope.ak.von, $scope.ak.bis, komm, last.zielgruppe)
+        oplanHttp.createBelegung($scope.slotId, komm, last.min_platz)
         .success(function(data) {
             rows.push({
-                id: data.id, kommentar: komm, min_platz: last.min_platz, praeferenz: "", raum: "", zielgruppe: last.zielgruppe
+                id: data.id, kommentar: komm, min_platz: last.min_platz, praeferenz: "", raum: ""
             });
             $scope.gridOptions.api.onNewRows();
             messageBar.show("success", "Neue Zeile angelegt.", 2500);
@@ -79,7 +55,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
     }
     
     function onEdit(params) {
-        oplanHttp.updateBelegung(params.data.id, params.data);
+        oplanHttp.updateBelegung($scope.slotId, params.data.id, params.data);
     }
     
     function raumDetails(raum) {
@@ -99,7 +75,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             var edit = document.createElement("div");
             edit.className = "raumsel";
             edit.style.position="absolute";
-            var elHeight = (frei.length+2)*35;
+            var elHeight = (frei.length+1)*35;
             var height = Math.min(elHeight, window.innerHeight - offset.top - 30);
             if (height < Math.min(elHeight,200)) {
               height = Math.min(elHeight,200); offset.top = window.innerHeight - height - 30;
@@ -110,17 +86,12 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
             document.body.appendChild(edit);
             setTimeout(function() {
                 $(document.body).one("click", function(e) {
-                    if (e.target.getAttribute("data-delete") !== null) {
-                        oplanHttp.doDELETE("belegung/" + params.data.id, { delete: true })
-                        .success(function() {
-                            loadLines(); messageBar.show("success", "Zeile wurde gelöscht.", 2500);
-                        });
-                    } else if (e.target.getAttribute("data-raumnr") !== null) {
+                    if (e.target.getAttribute("data-raumnr") !== null) {
                         params.$scope.$apply(function() {
                             var oldValue = params.data.raum;
                             params.data.raum = e.target.getAttribute("data-raumnr");
                             params.eGridCell.style.background="#ccc";
-                            oplanHttp.belegeRaum(params.data.raum, params.data.id)
+                            oplanHttp.belegeRaum($scope.slotId, params.data.id, params.data.raum)
                             .success(function() {
                                 params.eGridCell.style.background="green";
                                 setTimeout(function() { params.eGridCell.style.background=""; },200);
@@ -152,7 +123,6 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
                 .text(d.raum_nummer+" ("+uhr+")"+(d.belegt?" - "+d.belegt:"")).appendTo(edit);
             }
             $("<div>").attr("data-raumnr", "").text("(nicht zugewiesen)").appendTo(edit);
-            $("<div>").attr("data-delete", "").text("(Zeile löschen)").appendTo(edit);
 
         }
         return html;
@@ -179,24 +149,42 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
     $scope.runMultiselectAction = function() {
         var promises = [];
         var xx=$scope.gridOptions.api;
+        if ($scope.multiselect.action == "set_rooms") var _rooms = $scope.multiselect.value.split(/;/);
+        if ($scope.multiselect.action == "copy_rooms") var _rooms = [];
+        
         xx.forEachInMemory(function(node) {
           if (xx.isNodeSelected(node)) {
             console.log("selected: "+node.data.id+" "+node.data.kommentar+" --- doing action "+$scope.multiselect.action+"=", $scope.multiselect.value);
             switch($scope.multiselect.action) {
             case "delete":
-              promises.push( oplanHttp.doDELETE("belegung/" + node.data.id, { delete: true }) );
+              promises.push( oplanHttp.deleteBelegung($scope.slotId, node.data.id) );
               break;
             case "set_zielgruppe":
               node.data.zielgruppe = $scope.multiselect.value;
-              promises.push( oplanHttp.updateBelegung(node.data.id, node.data) );
+              promises.push( oplanHttp.updateBelegung($scope.slotId, node.data.id, node.data) );
               break;
             case "set_min_platz":
               node.data.min_platz = $scope.multiselect.value;
-              promises.push( oplanHttp.updateBelegung(node.data.id, node.data) );
+              promises.push( oplanHttp.updateBelegung($scope.slotId, node.data.id, node.data) );
+              break;
+            case "copy_rooms":
+              _rooms.push(node.data.raum);
+              break;
+            case "set_rooms":
+              var room = _rooms.shift();
+              promises.push( oplanHttp.belegeRaum($scope.slotId, node.data.id, room)
+              .success(function() {
+                  node.data.raum = room;
+              })
+              .error(function() {
+                node.data.raum ="error";
+              }) );
               break;
             }
           }
         });
+        if ($scope.multiselect.action == "copy_rooms") { prompt("ctrl-c, um daten zu kopieren ...", _rooms.join(';')); return; }
+        
         $q.all(promises).then(function(ok) {
           console.log(ok);
           loadLines(); messageBar.show("success", ""+ok.length+" Aktionen durchgeführt", 2500);

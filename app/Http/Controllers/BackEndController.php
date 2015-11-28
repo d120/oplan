@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use Oplan\Termin;
 use Oplan\Veranstaltung;
+use Oplan\Raumbedarf;
 
 use Oplan\Http\Requests;
 use Oplan\Http\Controllers\Controller;
@@ -68,6 +69,62 @@ class BackEndController extends Controller
         
         echo json_encode(array("success" => true, "id" => $termin->id));
         
+    }
+    
+    /**
+     * 
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function createRaumbedarf(Request $request, $ver_k, $ak_id)
+    {
+        $termin = Termin::find($ak_id);
+        if (!$termin || $termin->veranstaltung_id != $request->veranst->id) abort(422, "Invalid ak_id");
+        
+        $b = new Raumbedarf();
+        $b->termin_id = $termin->id;
+        $b->min_platz = $request->min_platz;
+        $b->kommentar = $request->kommentar;
+        $b->praeferenz = "";
+        $b->raum = "";
+        $b->save();
+        
+        return response()->json(["success" => true, "id" => $b->id]);
+    }
+    
+    /**
+     * 
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateRaumbedarf(Request $request, $ver_k, $ak_id, $b_id)
+    {
+        $termin = Termin::find($ak_id);
+        if (!$termin || $termin->veranstaltung_id != $request->veranst->id) abort(404, "AK not found");
+        $bedarf = Raumbedarf::find($b_id);
+        if (!$bedarf || $bedarf->termin_id != $termin->id) abort(404, "Raumbedarf not found");
+        $bedarf->min_platz = $request->min_platz;
+        $bedarf->kommentar = $request->kommentar;
+        $bedarf->praeferenz = $request->praeferenz;
+        $bedarf->save();
+        return response()->json(["success" => "true"]);
+    }
+    /**
+     * 
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function deleteRaumbedarf(Request $request, $ver_k, $ak_id, $b_id)
+    {
+        $termin = Termin::find($ak_id);
+        if (!$termin || $termin->veranstaltung_id != $request->veranst->id) abort(404, "AK not found");
+        $bedarf = Raumbedarf::find($b_id);
+        if (!$bedarf || $bedarf->termin_id != $termin->id) abort(404, "Raumbedarf not found");
+        $bedarf->delete();
+        return response()->json(["success" => "true"]);
     }
     
     /**
