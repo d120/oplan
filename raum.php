@@ -51,7 +51,7 @@ $freiResult = $db->query("SELECT f.id,f.raum_nummer,f.von,
     LEFT OUTER JOIN raumbedarf b ON f.raum_nummer=b.raum AND (
         (b.von < f.bis) AND (b.bis > f.von)
     )
-    WHERE f.blocked=0
+    WHERE f.blocked=0 and f.bis>NOW()
     group by f.id
     order by $order");
 if(!$freiResult) {header("HTTP/1.1 404 not found"); die("error(2): ".$db->errorInfo()[2]);}
