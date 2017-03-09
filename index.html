@@ -96,7 +96,7 @@
 <td>{{row[0].bis_time}}</td>
 <td>
   <span ng-repeat="room in row"><span ng-if="!$first">, </span>
-    <span><a href="#/raumplan/{{room.raum_nummer}}?w={{room.von|date:'ww'}}">{{room.raum_nummer}}</a></span></span>
+    <span><a href="#/raumplan/{{room.raum_nummer}}?w={{room.von|date:'yyyy-MM-dd'}}">{{room.raum_nummer}}</a></span></span>
 </td>
 </tr>
 </table>

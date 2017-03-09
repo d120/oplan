@@ -61,8 +61,8 @@ module.controller("OplanRaumListeCtrl", function($scope, $http, $location, $filt
     function onClick(e) {
         $scope.$apply(function() {
             console.log(e);
-            var week = moment(e.data.von).isoWeek();
-            $location.path("/raumplan/" + e.data.raum_nummer).search("w", week);
+            var t = moment(e.data.von);
+            $location.path("/raumplan/" + e.data.raum_nummer).search("w", t.format('YYYY-MM-DD'));
         });
     }
 });

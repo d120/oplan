@@ -14,8 +14,8 @@ if (isset($_GET["do"]) && $_GET["do"] == "list") {
   exit;
 }
 
-if (!(isset($_GET["w"]) && strlen($_GET["w"]) == 7)) die ("Bitte Kalenderwoche w=yyyy_ww angeben");
-$dateParam = str_replace("_","W",$_GET["w"]);
+if (!(isset($_GET["w"]) && strlen($_GET["w"]) == 10)) die ("Bitte Wochenbeginn w=yyyy-mm-dd angeben");
+$dateParam = $_GET["w"];
 
 if (isset($_GET["g"])) {
     $title = $_GET["g"];

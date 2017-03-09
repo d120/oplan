@@ -84,7 +84,7 @@ module.controller("OplanSlotCtrl", function($scope, oplanHttp, $filter, $routePa
     }
     
     function raumDetails(raum) {
-        var week = moment($scope.slot.von_dt).isoWeek();
+        var week = moment($scope.slot.von_dt).weekday(1).format("YYYY-MM-DD");
         window.open("#/raumplan/" + raum+"?w="+week,"","width=850,height=730");
     }
 

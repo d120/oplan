@@ -33,7 +33,7 @@ angular.module('oplanTimetable', ['ui.calendar'])
     })
 
     function onRenderView(view, element) {
-        $scope.woche = view.start.format("YYYY_ww");
+        $scope.woche = view.start.format("YYYY-MM-DD");
         $location.search("w", $scope.woche).replace();
     }
     
@@ -72,7 +72,7 @@ angular.module('oplanTimetable', ['ui.calendar'])
     }
     
     function eventLoader (start, end, timezone, callback) {
-      oplanHttp.doGet("stundenplan", { format: "json", w: moment(start).format("YYYY_WW"), g: $routeParams.gruppe })
+      oplanHttp.doGet("stundenplan", { format: "json", w: moment(start).format("YYYY-MM-DD"), g: $routeParams.gruppe })
       .success(function(result) {
         
         callback(result.map(function(x) {
@@ -89,8 +89,9 @@ angular.module('oplanTimetable', ['ui.calendar'])
     $scope.eventSources = [ eventLoader ];
     
     if ($routeParams.w) {
-      var paramDate = $routeParams.w.split(/_/);
-      var d = moment().year(paramDate[0]).date(1).month(1).isoWeek(paramDate[1]-1).day("Monday");
+      var paramDate = $routeParams.w.split(/-/);
+      var d = moment().year(paramDate[0]).date(parseInt(paramDate[2],10)).month(parseInt(paramDate[1],10)-1).day("Monday");
+      console.log(d);
       $scope.calendar.defaultDate = d;
     }
     
@@ -127,7 +128,8 @@ angular.module('oplanTimetable', ['ui.calendar'])
     };
     
     function onRenderView(view, element) {
-        $location.search("w", view.start.isoWeek()).replace();
+
+        $location.search("w", view.start.format("YYYY-MM-DD")).replace();
         $scope.calStart = view.start.toDate();
     }
     
@@ -193,7 +195,7 @@ angular.module('oplanTimetable', ['ui.calendar'])
 
     
     function eventLoader (start, end, timezone, callback) {
-      oplanHttp.doGet("stundenplan", { format: "json", w: moment(start).format("YYYY_WW"), raum: $routeParams.raum })
+      oplanHttp.doGet("stundenplan", { format: "json", w: moment(start).format("YYYY-MM-DD"), raum: $routeParams.raum })
       .success(function(result) {
         
         callback(result.map(function(x) {
@@ -219,8 +221,9 @@ angular.module('oplanTimetable', ['ui.calendar'])
     $scope.eventSources = [ eventLoader ];
     
     if ($routeParams.w) {
-      var paramDate = $routeParams.w.split(/_/);
-      var d = moment().year(paramDate[0]).date(1).month(1).isoWeek(paramDate[1]-1).day("Monday");
+      var paramDate = $routeParams.w.split(/-/); console.log(paramDate);
+      var d = moment().year(paramDate[0]).date(parseInt(paramDate[2],10)).month(parseInt(paramDate[1],10)-1).day("Monday");
+      console.log(d);
       $scope.calendar.defaultDate = d;
     }
     
