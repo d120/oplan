@@ -56,6 +56,7 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
     
     $rootScope.gotoRoomKey = function(e) {
         if (e.keyCode == 13) {
+            e.target.value = e.target.value.toUpperCase();
             $location.path("/raumplan/" + e.target.value).search("w", $rootScope.defaultWeek);
         }
     }
