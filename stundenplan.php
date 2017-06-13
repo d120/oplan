@@ -26,7 +26,8 @@ if (isset($_GET["g"])) {
     $res = $db->query("
     SELECT von,bis,id,concat(count(if(raum<>'',1,null)),'/',count(id)) anz,if(count(if(raum = '',1,null))>0,'wunsch','ok') typ ,sum(min_platz) min_platz,zielgruppe,kommentar,
     group_concat(concat(kommentar,'|',praeferenz,'|',raum) separator '<br>') zuteilung 
-    FROM raumbedarf WHERE zielgruppe LIKE " . $db->quote("%$_GET[g]%") . " AND von > '$start' AND von < '$end' GROUP BY von,bis");
+    FROM raumbedarf WHERE zielgruppe LIKE " . $db->quote("%$_GET[g]%") . " AND von > '$start' AND von < '$end' GROUP BY von,bis
+    ORDER BY von");
     if(!$res) echo $db->errorInfo()[2];
 
 
@@ -93,6 +94,7 @@ define("DAY",3600*24);
 define("ZOOM", 100);
 define("WIDTH",200);
 define("OFFSET_X",10);
+define("MIN_HEIGHT",32);
 
 echo "<div class=\"absplan\">";
 $wochentage=array("Montag","Dienstag","Mittwoch","Donnerstag","Freitag");
@@ -100,6 +102,7 @@ for($i=0;$i<5;$i++) {
   echo "<div class='dayheader' style='width: ".(WIDTH-20)."px; left: ".(OFFSET_X+($i*WIDTH))."px; '>" . $wochentage[$i]/*date("D", $kw+$i*DAY)*/ . "</div>\n";
 }
 $pos = array();
+$delta=0; $deltaDay=0;
 foreach($res as $row) {
   $von = strtotime($row["von"]);
   $ts = $von - $kw;
@@ -107,6 +110,12 @@ foreach($res as $row) {
   $height = strtotime($row["bis"]) - $von;
   $top = $ts % DAY;
   $left = floor($ts / DAY)*WIDTH;
+  if ($left != $deltaDay) {
+    $deltaDay = $left; $delta=0;
+  }
+  $top+=$delta;
+  if ($height/ZOOM < MIN_HEIGHT) {$delta+=MIN_HEIGHT*ZOOM-$height; $height=MIN_HEIGHT*ZOOM; }
+
   // echo "$ts,$top,$left<br>";
   $off = isset($pos[$ts]) ? $pos[$ts] : 0;
   if(isset($row["anz"]))$anz=$row["anz"]; else $anz="";

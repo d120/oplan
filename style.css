@@ -7,9 +7,9 @@ body, table { font: 10pt 'Helvetica Neue',Arial; }
 .absplan .termin { background: #fea; position: absolute; background-color:#FFFED1; border-collapse: collapse; table-layout: fixed; }
 .absplan .termin td { overflow: hidden; padding: 0; }
 .absplan .termin .text { text-align: center; }
-.absplan .termin time { display: inline-block; background: rgba(80,80,80,0.4); padding: 2px 4px; color: white; line-height: 1.1; }
+.absplan .termin time { display: inline-block; background: rgba(80,80,80,0.4); padding: 2px 4px; color: white; line-height: 0.9; }
 .absplan .termin small { float: right; padding: 2px 10px 0 0; }
-.absplan .header { height: 0.7em; background: rgba(80,80,80,0.3); }
+.absplan .header { height: 0.7em; background: rgba(80,80,80,0.3); line-height:0.9; }
 .termin.wunsch .header { background: #FFCB9F; }  .termin.wunsch time { background: #FF9735; }
 .termin.ok .header { background: #C9FFD1; }  .termin.ok time { background: #007F25; }
 .termin.frei .header { background: rgba(255,255,200,1); }
