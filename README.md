@@ -18,6 +18,12 @@ $DB_PASS="changeme";
 
 $tucan_root = 'https://www.tucan.tu-darmstadt.de';
 $tucan_myid = '357524424469685';
+
+$ldapHost = "ldap.example.org";
+$baseDN = "dc=example,dc=org";
+$peopleBase = "ou=People,$baseDN";
+$groupBase = "ou=Group,$baseDN";
+
 ```
 
 

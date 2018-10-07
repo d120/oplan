@@ -21,12 +21,44 @@ function fail($code, $message, $details = null) {
 }
 
 function auth_required() {
-    global $db, $login;
-    if (isset($_SERVER["PHP_AUTH_USER"]) && isset($_SERVER["PHP_AUTH_PW"])) {
-        $q = $db->prepare("SELECT * FROM users WHERE name = ? AND pwhash = ?");
-        $q->execute(array($_SERVER["PHP_AUTH_USER"], md5($_SERVER["PHP_AUTH_PW"])));
-        $result = $q->fetchAll();
-        if (count($result) == 1) $login = $result[0];
-    }
-    if (!$login) fail(401, "Authorization required", "");
+    if (!bind_user_basicauth()) fail(401, "Authorization required. Please log in using your D120 LDAP account.", "");
 }
+
+
+
+$ds=ldap_connect($ldapHost);
+ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, 3);
+
+
+function bind_user_basicauth() {
+  if ($_SERVER["PHP_AUTH_USER"] && $_SERVER["PHP_AUTH_PW"]) {
+    if (bind_user($_SERVER["PHP_AUTH_USER"],  $_SERVER["PHP_AUTH_PW"])) return true;
+  }
+  header("WWW-Authenticate: Basic realm=\"Please authenticate with your LDAP Account\"");
+  header("HTTP/1.1 401 Unauthorized");
+  return FALSE;
+}
+
+function bind_user($user,$pw){
+global $ds;
+  $user = strtolower(trim($user));
+  $userDN = get_user_dn($user);
+  $ok = ldap_bind($ds, $userDN, $pw);
+  if ($ok) $GLOBALS["boundUserDN"] = $userDN; else $GLOBALS["boundUserDN"] = FALSE;
+  return $ok;
+}
+
+function get_user_dn($username) {
+global $peopleBase;
+  return "uid=$username,$peopleBase";
+}
+
+function is_group_member($userdn, $groupdn) {
+global $ds;
+  $result = ldap_read($ds, $groupdn, "(member={$userdn})", ['cn']);
+  if ($result === FALSE) { return FALSE; };
+  $entries = ldap_get_entries($ds, $result);
+  return ($entries['count'] > 0);
+}
+
+
