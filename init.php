@@ -8,14 +8,7 @@ $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 
 function fail($code, $message, $details = null) {
-    switch($code) {
-        case 400: header("HTTP/1.1 400 Bad Request"); break;
-        case 401: header("HTTP/1.1 401 Unauthorized"); break;
-        case 403: header("HTTP/1.1 403 Forbidden"); break;
-        case 404: header("HTTP/1.1 404 Not Found"); break;
-        case 409: header("HTTP/1.1 409 Conflict"); break;
-        default:  header("HTTP/1.1 500 Internal Error"); break;
-    }
+    http_response_code($code);
     echo json_encode(array("success" => false, "error_code" => $code, "error" => $message, "error_details" => $details));
     exit;
 }
