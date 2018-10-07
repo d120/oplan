@@ -7,7 +7,7 @@ Software zur Raumplanung
 
 Erstelle eine Mysql-Datenbank und importiere oplan.sql
 
-Erstelle eine Datei .htconfig.php mit folgendem Inhalt:
+Erstelle eine Datei .htconfig.php mit folgendem Inhalt (passe die Datenbank- und LDAP-Konfiguration entsprechend an):
 
 ```
 <?php
@@ -26,4 +26,9 @@ $groupBase = "ou=Group,$baseDN";
 
 ```
 
+Erstelle eine Datei `config.js` mit folgender Variablen (passe das Datum an die aktuelle Veranstaltung an):
+
+```
+CALENDAR_DEFAULT_WEEK = "2018-10-08";
+```
 

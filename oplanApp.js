@@ -69,7 +69,7 @@ angular.module("oplanApp", ["ngRoute", "oplanRaumListe", "oplanTimetable",
       $rootScope.stundenplanlist = ok;      
     })
     
-    $rootScope.defaultWeek = "2017-04-10";
+    $rootScope.defaultWeek = CALENDAR_DEFAULT_WEEK;
   }])
   
 .controller('OplanHomeCtrl', function($scope, $rootScope, oplanHttp) {
