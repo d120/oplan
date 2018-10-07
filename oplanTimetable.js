@@ -39,7 +39,10 @@ angular.module('oplanTimetable', ['ui.calendar'])
     
     function onSelectTimerange(start, end) {
         var desc = prompt("Raumbedarf von "+start.format("HH:mm")+" bis "+end.format("HH:mm")+" eintragen?\n\nKommentar:");
-        if (desc === null) return;
+        if (desc === null) {
+            uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
+            return;
+        }
         
         oplanHttp.newSlot(start, end, desc, $scope.gruppe)
         .success(function() {
@@ -47,7 +50,9 @@ angular.module('oplanTimetable', ['ui.calendar'])
             uiCalendarConfig.calendars.timetable.fullCalendar('refetchEvents');
         })
         .error(function(data) {
-            alert("Allgemeiner Fehler");
+            alert("Fehler beim Slot Erstellen:\n"+data.error);
+            console.log("Allgemeiner Fehler",data);
+            uiCalendarConfig.calendars.timetable.fullCalendar('unselect');
         });
     }
     
